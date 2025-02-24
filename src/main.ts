@@ -37,34 +37,54 @@ export async function main() {
     depthTexture = device.createTexture(depthTextureDsc);
     depthTextureView = depthTexture.createView();
 
-    //position - 3 float + color - 3 floats
-    const verts = new Float32Array([
-      1.0, -1.0, 0.0, 1.0, 0.0, 0.0,
-       -1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
-        0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+    // Separate position and color data into different arrays
+    const positions = new Float32Array([
+      1.0, -1.0, 0.0,  // Vertex 1
+      -1.0, -1.0, 0.0, // Vertex 2
+      0.0, 1.0, 0.0,   // Vertex 3
+    ]);
+
+    const colors = new Float32Array([
+      1.0, 0.0, 0.0,  // Vertex 1
+      0.0, 1.0, 0.0,  // Vertex 2
+      0.0, 0.0, 1.0,  // Vertex 3
     ]);
 
     const indices = new Uint16Array([0, 1, 2]);
 
-    const vertexBuffer = device.createBuffer({
-      label: "Vertices",
-      size: verts.byteLength,
+    const positionBuffer = device.createBuffer({
+      label: "Positions",
+      size: positions.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
-    device.queue.writeBuffer(vertexBuffer, 0, verts);
+    device.queue.writeBuffer(positionBuffer, 0, positions);
 
-    const vertexBufferLayout: GPUVertexBufferLayout = {
-      arrayStride: 6 * 4,
+    const colorBuffer = device.createBuffer({
+      label: "Colors",
+      size: colors.byteLength,
+      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    });
+
+    device.queue.writeBuffer(colorBuffer, 0, colors);
+
+    const positionBufferLayout: GPUVertexBufferLayout = {
+      arrayStride: 3 * 4, // 3 floats for position
       attributes: [
         {
           format: "float32x3",
           offset: 0,
           shaderLocation: 0,
         },
+      ],
+    };
+
+    const colorBufferLayout: GPUVertexBufferLayout = {
+      arrayStride: 3 * 4, // 3 floats for color
+      attributes: [
         {
           format: "float32x3",
-          offset: 3 * 4,
+          offset: 0,
           shaderLocation: 1,
         },
       ],
@@ -77,7 +97,7 @@ export async function main() {
     const vertex: GPUVertexState = {
       module: vertexShaderModule,
       entryPoint: "main",
-      buffers: [vertexBufferLayout],
+      buffers: [positionBufferLayout, colorBufferLayout],
     };
 
     const fragmentShaderModule = device.createShaderModule({
@@ -87,7 +107,7 @@ export async function main() {
       module: fragmentShaderModule,
       entryPoint: "main",
       targets: [{ format: canvasFormat }],
-    }
+    };
 
     const primitive: GPUPrimitiveState = {
       frontFace: "cw",
@@ -124,13 +144,15 @@ export async function main() {
         depthStoreOp: "store",
         stencilLoadOp: "clear",
         stencilStoreOp: "store",
-        depthClearValue: 1.0
+        depthClearValue: 1.0,
+        stencilClearValue: 0,
       },
     });
 
     pass.setPipeline(pipeline);
-    pass.setVertexBuffer(0, vertexBuffer);
-    pass.draw(verts.length / 6);
+    pass.setVertexBuffer(0, positionBuffer);
+    pass.setVertexBuffer(1, colorBuffer);
+    pass.draw(positions.length / 3);
 
     pass.end();
 
