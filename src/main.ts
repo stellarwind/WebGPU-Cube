@@ -37,20 +37,17 @@ export async function main() {
     depthTexture = device.createTexture(depthTextureDsc);
     depthTextureView = depthTexture.createView();
 
-    // Separate position and color data into different arrays
     const positions = new Float32Array([
-      1.0, -1.0, 0.0,  // Vertex 1
-      -1.0, -1.0, 0.0, // Vertex 2
-      0.0, 1.0, 0.0,   // Vertex 3
+      1.0, -1.0, 0.0,  
+      -1.0, -1.0, 0.0,
+      0.0, 1.0, 0.0, 
     ]);
 
     const colors = new Float32Array([
-      1.0, 0.0, 0.0,  // Vertex 1
-      0.0, 1.0, 0.0,  // Vertex 2
-      0.0, 0.0, 1.0,  // Vertex 3
+      1.0, 0.0, 0.0, 
+      0.0, 1.0, 0.0,
+      0.0, 0.0, 1.0, 
     ]);
-
-    const indices = new Uint16Array([0, 1, 2]);
 
     const positionBuffer = device.createBuffer({
       label: "Positions",
@@ -58,7 +55,7 @@ export async function main() {
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
-    device.queue.writeBuffer(positionBuffer, 0, positions);
+    queue.writeBuffer(positionBuffer, 0, positions);
 
     const colorBuffer = device.createBuffer({
       label: "Colors",
@@ -66,10 +63,10 @@ export async function main() {
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
-    device.queue.writeBuffer(colorBuffer, 0, colors);
+    queue.writeBuffer(colorBuffer, 0, colors);
 
     const positionBufferLayout: GPUVertexBufferLayout = {
-      arrayStride: 3 * 4, // 3 floats for position
+      arrayStride: 3 * 4, 
       attributes: [
         {
           format: "float32x3",
@@ -80,7 +77,7 @@ export async function main() {
     };
 
     const colorBufferLayout: GPUVertexBufferLayout = {
-      arrayStride: 3 * 4, // 3 floats for color
+      arrayStride: 3 * 4, 
       attributes: [
         {
           format: "float32x3",
