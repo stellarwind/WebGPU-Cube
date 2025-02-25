@@ -2,30 +2,31 @@ import { initializeGPU } from "./GPU.ts";
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
 
-export async function main() {
-  try {
-    const device: GPUDevice = await initializeGPU();
+export class WebGPURenderer {
+  private device!: GPUDevice;
+  private queue!: GPUQueue;
+  private pipeline!: GPURenderPipeline;
+  private positionBuffer!: GPUBuffer;
+  private colorBuffer!: GPUBuffer;
+  private depthTextureView!: GPUTextureView;
+  private canvasFormat!: GPUTextureFormat;
+  private context: GPUCanvasContext | null = null;
 
-    console.log("GPU Device initialized", device);
+  public async init() {
+    this.device = await initializeGPU();
+    console.log("GPU Device initialized", this.device);
 
     const canvas = document.querySelector("#viewport") as HTMLCanvasElement;
-    const context = canvas.getContext("webgpu");
-    const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-    const encoder: GPUCommandEncoder = device.createCommandEncoder();
-    let queue: GPUQueue = device.queue;
+    this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+    this.queue = this.device.queue;
+    
+    this.context = canvas.getContext("webgpu");
+    if (this.context == null) return;
 
-    if (context == null) return;
-
-    context.configure({
-      device: device,
-      format: canvasFormat,
+    this.context.configure({
+      device: this.device,
+      format: this.canvasFormat,
     });
-
-    let depthTexture: GPUTexture;
-    let depthTextureView: GPUTextureView;
-
-    let colorTexture: GPUTexture;
-    let colorTextureView: GPUTextureView;
 
     const depthTextureDsc: GPUTextureDescriptor = {
       size: [canvas.width, canvas.height, 1],
@@ -34,39 +35,39 @@ export async function main() {
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     };
 
-    depthTexture = device.createTexture(depthTextureDsc);
-    depthTextureView = depthTexture.createView();
+    const depthTexture = this.device.createTexture(depthTextureDsc);
+    this.depthTextureView = depthTexture.createView();
 
     const positions = new Float32Array([
-      1.0, -1.0, 0.0,  
+      1.0, -1.0, 0.0,
       -1.0, -1.0, 0.0,
-      0.0, 1.0, 0.0, 
+      0.0, 1.0, 0.0,
     ]);
 
     const colors = new Float32Array([
-      1.0, 0.0, 0.0, 
+      1.0, 0.0, 0.0,
       0.0, 1.0, 0.0,
-      0.0, 0.0, 1.0, 
+      0.0, 0.0, 1.0,
     ]);
 
-    const positionBuffer = device.createBuffer({
+    this.positionBuffer = this.device.createBuffer({
       label: "Positions",
       size: positions.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
-    queue.writeBuffer(positionBuffer, 0, positions);
+    this.queue.writeBuffer(this.positionBuffer, 0, positions);
 
-    const colorBuffer = device.createBuffer({
+    this.colorBuffer = this.device.createBuffer({
       label: "Colors",
       size: colors.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
 
-    queue.writeBuffer(colorBuffer, 0, colors);
+    this.queue.writeBuffer(this.colorBuffer, 0, colors);
 
     const positionBufferLayout: GPUVertexBufferLayout = {
-      arrayStride: 3 * 4, 
+      arrayStride: 3 * 4,
       attributes: [
         {
           format: "float32x3",
@@ -77,7 +78,7 @@ export async function main() {
     };
 
     const colorBufferLayout: GPUVertexBufferLayout = {
-      arrayStride: 3 * 4, 
+      arrayStride: 3 * 4,
       attributes: [
         {
           format: "float32x3",
@@ -87,7 +88,7 @@ export async function main() {
       ],
     };
 
-    const vertexShaderModule = device.createShaderModule({
+    const vertexShaderModule = this.device.createShaderModule({
       code: vertexShaderCode,
     });
 
@@ -97,13 +98,14 @@ export async function main() {
       buffers: [positionBufferLayout, colorBufferLayout],
     };
 
-    const fragmentShaderModule = device.createShaderModule({
+    const fragmentShaderModule = this.device.createShaderModule({
       code: fragmentShaderCode,
     });
+
     const fragment: GPUFragmentState = {
       module: fragmentShaderModule,
       entryPoint: "main",
-      targets: [{ format: canvasFormat }],
+      targets: [{ format: this.canvasFormat }],
     };
 
     const primitive: GPUPrimitiveState = {
@@ -125,18 +127,24 @@ export async function main() {
       primitive,
       depthStencil,
     };
-    const pipeline = device.createRenderPipeline(pipelineDesc);
+
+    this.pipeline = this.device.createRenderPipeline(pipelineDesc);
+  }
+
+  public renderFrame() {
+    if (this.context == null) return;
+    const encoder: GPUCommandEncoder = this.device.createCommandEncoder();
 
     const pass = encoder.beginRenderPass({
       colorAttachments: [
         {
-          view: context.getCurrentTexture().createView(),
+          view: this.context.getCurrentTexture().createView(),
           loadOp: "clear",
           storeOp: "store",
         },
       ],
       depthStencilAttachment: {
-        view: depthTextureView,
+        view: this.depthTextureView,
         depthLoadOp: "clear",
         depthStoreOp: "store",
         stencilLoadOp: "clear",
@@ -146,21 +154,15 @@ export async function main() {
       },
     });
 
-    pass.setPipeline(pipeline);
-    pass.setVertexBuffer(0, positionBuffer);
-    pass.setVertexBuffer(1, colorBuffer);
-    pass.draw(positions.length / 3);
+    pass.setPipeline(this.pipeline);
+    pass.setVertexBuffer(0, this.positionBuffer);
+    pass.setVertexBuffer(1, this.colorBuffer);
+    pass.draw(this.positionBuffer.size / 12.0); //3 Floats - 4 bytes per vertex
 
     pass.end();
 
     const commandBuffer = encoder.finish();
-    queue.submit([commandBuffer]);
-
-    colorTexture = context.getCurrentTexture();
-    colorTextureView = colorTexture.createView();
-
-    console.log("frame delivered in X ms");
-  } catch (error) {
-    console.error("Failed to initialize GPU in main.ts:", error);
+    this.queue.submit([commandBuffer]);
   }
 }
+
