@@ -1,25 +1,30 @@
-import { initializeGPU } from "./GPU.ts";
+import { getDevice, getQueue, initializeGPU } from "./GPU.ts";
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
+import { Mesh } from "./mesh.ts";
 
 export class WebGPURenderer {
   private device!: GPUDevice;
   private queue!: GPUQueue;
   private pipeline!: GPURenderPipeline;
-  private positionBuffer!: GPUBuffer;
-  private colorBuffer!: GPUBuffer;
+  // private positionBuffer!: GPUBuffer;
+  // private colorBuffer!: GPUBuffer;
   private depthTextureView!: GPUTextureView;
   private canvasFormat!: GPUTextureFormat;
   private context: GPUCanvasContext | null = null;
 
+  private readonly meshList: Array<Mesh> = [];
+
   public async init() {
-    this.device = await initializeGPU();
+    await initializeGPU();
+    this.device = getDevice();
+    this.queue = getQueue();
+
     console.log("GPU Device initialized", this.device);
 
     const canvas = document.querySelector("#viewport") as HTMLCanvasElement;
     this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
-    this.queue = this.device.queue;
-    
+
     this.context = canvas.getContext("webgpu");
     if (this.context == null) return;
 
@@ -37,34 +42,6 @@ export class WebGPURenderer {
 
     const depthTexture = this.device.createTexture(depthTextureDsc);
     this.depthTextureView = depthTexture.createView();
-
-    const positions = new Float32Array([
-      1.0, -1.0, 0.0,
-      -1.0, -1.0, 0.0,
-      0.0, 1.0, 0.0,
-    ]);
-
-    const colors = new Float32Array([
-      1.0, 0.0, 0.0,
-      0.0, 1.0, 0.0,
-      0.0, 0.0, 1.0,
-    ]);
-
-    this.positionBuffer = this.device.createBuffer({
-      label: "Positions",
-      size: positions.byteLength,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-
-    this.queue.writeBuffer(this.positionBuffer, 0, positions);
-
-    this.colorBuffer = this.device.createBuffer({
-      label: "Colors",
-      size: colors.byteLength,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-
-    this.queue.writeBuffer(this.colorBuffer, 0, colors);
 
     const positionBufferLayout: GPUVertexBufferLayout = {
       arrayStride: 3 * 4,
@@ -155,14 +132,27 @@ export class WebGPURenderer {
     });
 
     pass.setPipeline(this.pipeline);
-    pass.setVertexBuffer(0, this.positionBuffer);
-    pass.setVertexBuffer(1, this.colorBuffer);
-    pass.draw(this.positionBuffer.size / 12.0); //3 Floats - 4 bytes per vertex
+    for (let i = 0; i < this.meshList.length; i++) {
+      const mesh = this.meshList[i];
+      pass.setVertexBuffer(0, mesh.positionBuffer);
+      pass.setVertexBuffer(1, mesh.colorBuffer);
+  
+      // 3 Floats - 4 bytes per vertex
+      pass.draw(mesh.positionBuffer.size / 12);
+    }
 
     pass.end();
 
     const commandBuffer = encoder.finish();
     this.queue.submit([commandBuffer]);
   }
-}
 
+  public createTriangle(colors?: Array<number>) {
+    const positions = new Array(1.0, -1.0, 0.0, -1.0, -1.0, 0.0, 0.0, 1.0, 0.0);
+    const indices = new Array(0, 1, 2);
+
+    const mesh = new Mesh(positions, indices, colors);
+
+    this.meshList.push(mesh);
+  }
+}
