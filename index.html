@@ -10,11 +10,15 @@
       import { WebGPURenderer } from "./src/main.ts";
       const renderer = new WebGPURenderer();
       await renderer.init();
-
+      let lastFrameTime = performance.now();
       const renderLoop = () => {
-          renderer.renderFrame();
-          requestAnimationFrame(renderLoop);
-      }
+        const currentFrame = performance.now() - lastFrameTime;
+        lastFrameTime = performance.now();
+        // console.log(currentFrame + " ms");
+
+        renderer.renderFrame();
+        requestAnimationFrame(renderLoop);
+      };
 
       renderLoop();
     </script>
