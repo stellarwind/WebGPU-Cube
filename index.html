@@ -7,18 +7,22 @@
   <body>
     <canvas id="viewport" width="512" height="512"></canvas>
     <script type="module">
-      import { WebGPURenderer } from "./src/main.ts";
+      const DEBUG = false;
+
+      import { WebGPURenderer } from "./src/renderer";
+      import { generateQuad } from "./src/primitives"
 
       const renderer = new WebGPURenderer();
       await renderer.init();
 
-      renderer.createTriangle([1,0,0,0,1,0,1,1,1]);
+      renderer.addStaticMesh(generateQuad());
 
       let lastFrameTime = performance.now();
       const renderLoop = () => {
         const currentFrame = performance.now() - lastFrameTime;
         lastFrameTime = performance.now();
-        // console.log(currentFrame + " ms");
+        if (DEBUG)
+          console.log(currentFrame + " ms");
 
         renderer.renderFrame();
         requestAnimationFrame(renderLoop);
