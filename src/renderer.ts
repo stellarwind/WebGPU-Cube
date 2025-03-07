@@ -2,6 +2,8 @@ import { getDevice, getQueue, initializeGPU } from "./GPU.ts";
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
 import { Mesh } from "./mesh.ts";
+import { Entity } from "./entity.ts";
+import { mat4 } from "gl-matrix";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -9,9 +11,12 @@ export class WebGPURenderer {
     private device!: GPUDevice;
     private queue!: GPUQueue;
     private pipeline!: GPURenderPipeline;
+    private uniformBuffer!: GPUBuffer;
+    private uniformBufferBindGroup!: GPUBindGroup;
     private depthTextureView!: GPUTextureView;
 
     private readonly meshList: Array<Mesh> = [];
+    private readonly entityList: Array<Entity> = [];
 
     public async init() {
         await initializeGPU();
@@ -40,6 +45,7 @@ export class WebGPURenderer {
 
         const depthTexture = this.device.createTexture(depthTextureDsc);
         this.depthTextureView = depthTexture.createView();
+
 
         const positionBufferLayout: GPUVertexBufferLayout = {
             arrayStride: 3 * 4,
@@ -104,11 +110,34 @@ export class WebGPURenderer {
         };
 
         this.pipeline = this.device.createRenderPipeline(pipelineDesc);
+
+        this.uniformBuffer = this.device.createBuffer({
+            size: 4 * 16, // 4x4 MVP * 4 bytes float
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+
+        this.uniformBufferBindGroup = this.device.createBindGroup({
+            layout: this.pipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.uniformBuffer,
+                    },
+                },
+            ],
+        });
     }
 
     public renderFrame() {
         if (this.context == null) return;
         const encoder: GPUCommandEncoder = this.device.createCommandEncoder();
+
+        let mvp: mat4 = mat4.create();
+        mat4.identity(mvp);
+        const mvpArray = new Float32Array(mvp);
+
+        this.device.queue.writeBuffer(this.uniformBuffer, 0, mvpArray.buffer, mvpArray.byteOffset, mvpArray.byteLength);
 
         const pass = encoder.beginRenderPass({
             colorAttachments: [
@@ -134,7 +163,8 @@ export class WebGPURenderer {
             const mesh = this.meshList[i];
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);
-            pass.setIndexBuffer(mesh.indexBuffer, "uint16")
+            pass.setBindGroup(0, this.uniformBufferBindGroup);
+            pass.setIndexBuffer(mesh.indexBuffer, "uint16");
 
             pass.drawIndexed(mesh.indexCount);
         }
