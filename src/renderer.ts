@@ -3,7 +3,7 @@ import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
 import { Mesh } from "./mesh.ts";
 import { Entity } from "./entity.ts";
-import { mat4 } from "gl-matrix";
+import { mat4, } from "wgpu-matrix";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -15,7 +15,6 @@ export class WebGPURenderer {
     private uniformBufferBindGroup!: GPUBindGroup;
     private depthTextureView!: GPUTextureView;
 
-    private readonly meshList: Array<Mesh> = [];
     private readonly entityList: Array<Entity> = [];
 
     public async init() {
@@ -90,7 +89,6 @@ export class WebGPURenderer {
         };
 
         const primitive: GPUPrimitiveState = {
-            frontFace: "cw",
             cullMode: "none",
             topology: "triangle-list",
         };
@@ -133,11 +131,6 @@ export class WebGPURenderer {
         if (this.context == null) return;
         const encoder: GPUCommandEncoder = this.device.createCommandEncoder();
 
-        let mvp: mat4 = mat4.create();
-        mat4.identity(mvp);
-        const mvpArray = new Float32Array(mvp);
-
-        this.device.queue.writeBuffer(this.uniformBuffer, 0, mvpArray.buffer, mvpArray.byteOffset, mvpArray.byteLength);
 
         const pass = encoder.beginRenderPass({
             colorAttachments: [
@@ -159,11 +152,43 @@ export class WebGPURenderer {
         });
 
         pass.setPipeline(this.pipeline);
-        for (let i = 0; i < this.meshList.length; i++) {
-            const mesh = this.meshList[i];
+
+        const fov = 60 * Math.PI / 180; 
+        const aspect = 512 / 512;
+        const near = 0.1;
+        const far = 1000.0;
+
+        const projectionMatrix = mat4.perspective(fov, aspect, near, far);
+
+        const viewMat = mat4.lookAt(
+            [0, 0, 0], //eye
+            [0, 0, -1],  //target
+            [0, 1, 0]   //up
+        );
+
+        for (let i = 0; i < this.entityList.length; i++) {
+            
+            this.entityList[i].calculateMVPMatrix(
+                viewMat,
+                projectionMatrix
+            );
+            
+            const mvpArray = new Float32Array(this.entityList[i].mvpMatrix);
+            this.device.queue.writeBuffer(
+                this.uniformBuffer,
+                0,
+                mvpArray.buffer,
+                mvpArray.byteOffset,
+                mvpArray.byteLength
+            );
+            
+            const mesh = this.entityList[i].mesh;
+            if (mesh === null) continue;
+
+            pass.setBindGroup(0, this.uniformBufferBindGroup);
+
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);
-            pass.setBindGroup(0, this.uniformBufferBindGroup);
             pass.setIndexBuffer(mesh.indexBuffer, "uint16");
 
             pass.drawIndexed(mesh.indexCount);
@@ -175,7 +200,10 @@ export class WebGPURenderer {
         this.queue.submit([commandBuffer]);
     }
 
-    public addStaticMesh(mesh: Mesh) {
-        this.meshList.push(mesh);
+    public addEntity(): Entity {
+        const entity = new Entity();
+        this.entityList.push(entity);
+        return entity;
     }
+
 }

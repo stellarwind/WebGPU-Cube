@@ -4,18 +4,22 @@
     <meta charset="utf-8" />
     <title>WebGPU Viewer</title>
   </head>
-  <body>
+  <body style="background-color: rgb(45, 45, 45)">
     <canvas id="viewport" width="512" height="512"></canvas>
     <script type="module">
       const DEBUG = false;
 
       import { WebGPURenderer } from "./src/renderer";
-      import { generateQuad } from "./src/primitives"
+      import { generateQuad, generateCube, generateTriangle } from "./src/primitives"
 
       const renderer = new WebGPURenderer();
       await renderer.init();
 
-      renderer.addStaticMesh(generateQuad());
+      const entity = renderer.addEntity();
+
+      entity.addMesh(generateQuad());
+      entity.translate(1, -1, -5);
+      entity.setScale(0.5, 1, 1);
 
       let lastFrameTime = performance.now();
       const renderLoop = () => {

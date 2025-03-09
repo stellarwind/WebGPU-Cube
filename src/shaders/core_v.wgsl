@@ -10,10 +10,10 @@ struct VSOut {
  };
 
 @vertex
-fn main(@location(0) inPos: vec3f,
+fn main(@location(0) inPos: vec4f,
         @location(1) inColor: vec3f) -> VSOut {
     var vsOut: VSOut;
-    vsOut.Position = vec4(inPos, 1) * uniforms.mvpMatrix;
+    vsOut.Position =  uniforms.mvpMatrix * inPos;
     vsOut.color = inColor;
     return vsOut;
 }

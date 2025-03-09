@@ -1,4 +1,3 @@
-import "gl-matrix";
 import { getDevice, getQueue } from "./GPU";
 
 export class Mesh {
@@ -11,6 +10,7 @@ export class Mesh {
     private colors!: Float32Array;
     private indices!: Uint16Array;
     // private normals!: Float32Array;
+    // private uvs!: Float32Array;
 
     public get indexCount(): number {
         return this.indices.length;
@@ -32,6 +32,7 @@ export class Mesh {
         getQueue().writeBuffer(this.positionBuffer, 0, this.positions);
 
         this.indices = new Uint16Array(indices);
+
         this.indexBuffer = getDevice().createBuffer({
             label: "Indices",
             size: this.indices.byteLength,
