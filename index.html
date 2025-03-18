@@ -1,38 +1,41 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>WebGPU Viewer</title>
-  </head>
-  <body style="background-color: rgb(45, 45, 45)">
-    <canvas id="viewport" width="512" height="512"></canvas>
-    <script type="module">
-      const DEBUG = false;
+    <head>
+        <meta charset="utf-8" />
+        <title>WebGPU Viewer</title>
+    </head>
+    <body style="background-color: rgb(45, 45, 45)">
+        <canvas id="viewport" width="512" height="512"></canvas>
+        <script type="module">
+            const DEBUG = false;
 
-      import { WebGPURenderer } from "./src/renderer";
-      import { generateQuad, generateCube, generateTriangle } from "./src/primitives"
+            import { WebGPURenderer } from "./src/renderer";
+            import {
+                generateQuad,
+                generateCube,
+                generateTriangle,
+            } from "./src/primitives";
 
-      const renderer = new WebGPURenderer();
-      await renderer.init();
+            const renderer = new WebGPURenderer();
+            await renderer.init();
 
-      const entity = renderer.addEntity();
+            const entity = renderer.addEntity();
 
-      entity.addMesh(generateQuad());
-      entity.translate(1, -1, -5);
-      entity.setScale(0.5, 1, 1);
+            entity.addMesh(generateQuad());
+            entity.translate(1, -1, -5);
+            entity.setScale(0.5, 1, 1);
 
-      let lastFrameTime = performance.now();
-      const renderLoop = () => {
-        const currentFrame = performance.now() - lastFrameTime;
-        lastFrameTime = performance.now();
-        if (DEBUG)
-          console.log(currentFrame + " ms");
+            let lastFrameTime = performance.now();
+            const renderLoop = () => {
+                const currentFrame = performance.now() - lastFrameTime;
+                lastFrameTime = performance.now();
+                if (DEBUG) console.log(currentFrame + " ms");
 
-        renderer.renderFrame();
-        requestAnimationFrame(renderLoop);
-      };
+                renderer.renderFrame();
+                requestAnimationFrame(renderLoop);
+            };
 
-      renderLoop();
-    </script>
-  </body>
+            renderLoop();
+        </script>
+    </body>
 </html>

@@ -5,12 +5,13 @@ export class Mesh {
     public readonly colorBuffer!: GPUBuffer;
     public readonly indexBuffer!: GPUBuffer;
     public readonly normalBuffer!: GPUBuffer;
+    public readonly uvBuffer!: GPUBuffer;
 
     private positions!: Float32Array;
     private colors!: Float32Array;
     private indices!: Uint16Array;
-    // private normals!: Float32Array;
-    // private uvs!: Float32Array;
+    private normals!: Float32Array;
+    private uvs!: Float32Array;
 
     public get indexCount(): number {
         return this.indices.length;
@@ -21,8 +22,11 @@ export class Mesh {
     constructor(
         verts: Array<number>,
         indices: Array<number>,
-        colors: Array<number> | null = null
+        colors: Array<number> | null = null,
+        normals: Array<number> | null = null,
+        uvs: Array<number> | null = null
     ) {
+        // Positions
         this.positions = new Float32Array(verts);
         this.positionBuffer = getDevice().createBuffer({
             label: "Positions",
@@ -40,6 +44,7 @@ export class Mesh {
         });
         getQueue().writeBuffer(this.indexBuffer, 0, this.indices);
 
+        // Vertices
         let vertexCount = this.positions.length / 3.0;
         if (colors === null) {
             const defaultColors = new Float32Array(vertexCount * 3);
@@ -59,5 +64,34 @@ export class Mesh {
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
         getQueue().writeBuffer(this.colorBuffer, 0, this.colors);
+
+        // Normals
+        if (normals === null) {
+            this.normals = new Float32Array(vertexCount * 3).fill(0);
+        } else {
+            this.normals = new Float32Array(normals);
+        }
+
+        this.normalBuffer = getDevice().createBuffer({
+            label: "Normals",
+            size: this.normals.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+
+        getQueue().writeBuffer(this.normalBuffer, 0, this.normals);
+
+        // UVs
+        if (uvs === null) {
+            this.uvs = new Float32Array(vertexCount * 2).fill(0);
+        } else {
+            this.uvs = new Float32Array(uvs);
+        }
+
+        this.uvBuffer = getDevice().createBuffer({
+            label: "UVs",
+            size: this.uvs.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+        getQueue().writeBuffer(this.uvBuffer, 0, this.uvs);
     }
 }

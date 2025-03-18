@@ -11,7 +11,9 @@ struct VSOut {
 
 @vertex
 fn main(@location(0) inPos: vec4f,
-        @location(1) inColor: vec3f) -> VSOut {
+        @location(1) inColor: vec3f,
+        @location(2) inNrm: vec3f,
+        @location(3) inUV: vec2f) -> VSOut {
     var vsOut: VSOut;
     vsOut.Position =  uniforms.mvpMatrix * inPos;
     vsOut.color = inColor;

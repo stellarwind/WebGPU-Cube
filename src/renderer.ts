@@ -68,6 +68,28 @@ export class WebGPURenderer {
             ],
         };
 
+        const nrmBufferLayour: GPUVertexBufferLayout = {
+            arrayStride: 3 * 4,
+            attributes: [
+                {
+                    shaderLocation: 2,
+                    format: "float32x3",
+                    offset: 0,
+                },
+            ],
+        };
+
+        const uvBufferLayout: GPUVertexBufferLayout = {
+            arrayStride: 2 * 4,
+            attributes: [
+                {
+                    shaderLocation: 3,
+                    format: "float32x2",
+                    offset: 0,
+                },
+            ],
+        };
+
         const vertexShaderModule = this.device.createShaderModule({
             code: vertexShaderCode,
         });
@@ -75,7 +97,7 @@ export class WebGPURenderer {
         const vertex: GPUVertexState = {
             module: vertexShaderModule,
             entryPoint: "main",
-            buffers: [positionBufferLayout, colorBufferLayout],
+            buffers: [positionBufferLayout, colorBufferLayout, nrmBufferLayour, uvBufferLayout],
         };
 
         const fragmentShaderModule = this.device.createShaderModule({
@@ -189,6 +211,8 @@ export class WebGPURenderer {
 
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);
+            pass.setVertexBuffer(2, mesh.normalBuffer);
+            pass.setVertexBuffer(3, mesh.uvBuffer);
             pass.setIndexBuffer(mesh.indexBuffer, "uint16");
 
             pass.drawIndexed(mesh.indexCount);
@@ -204,6 +228,19 @@ export class WebGPURenderer {
         const entity = new Entity();
         this.entityList.push(entity);
         return entity;
+    }
+
+    private createTexture(imgBitmap: ImageBitmap): GPUTexture {
+        const texture = this.device.createTexture({
+            size: { width: imgBitmap.width, height: imgBitmap.height, depthOrArrayLayers: 1 },
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+        });
+
+        this.device.queue.copyExternalImageToTexture({source: imgBitmap}, {texture: texture}, [imgBitmap.width, imgBitmap.height, 1]);
+
+        return texture;
+
     }
 
 }
