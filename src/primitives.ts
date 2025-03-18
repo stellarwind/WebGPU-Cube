@@ -20,11 +20,11 @@ export function generateQuad(colors?: Array<number>): Mesh {
         -1.0, 1.0, 0.0,
     ];
 
-    const uvs = [ 
-        0.0, 0.0, 
-        1.0, 0.0, 
-        1.0, 1.0, 
-        0.0, 1.0
+    const uvs = [
+        0.0, 1.0,  
+        1.0, 1.0,  
+        1.0, 0.0,  
+        0.0, 0.0   
     ];
 
     const normals = [
@@ -36,7 +36,7 @@ export function generateQuad(colors?: Array<number>): Mesh {
 
     const indices = [0, 1, 2, 0, 2, 3];
 
-    const mesh = new Mesh(positions, indices, colors);
+    const mesh = new Mesh(positions, indices, colors, normals, uvs);
 
     return mesh;
 }
@@ -123,5 +123,5 @@ export function generateCube(colors?: Array<number>): Mesh {
         1, 2, 6, 1, 6, 5, 0, 3, 7, 0, 7, 4,
     ];
 
-    return new Mesh(positions, indices, colors);
+    return new Mesh(positions, indices, colors, normals, uvs);
 }

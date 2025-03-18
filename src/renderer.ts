@@ -4,6 +4,7 @@ import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
 import { Mesh } from "./mesh.ts";
 import { Entity } from "./entity.ts";
 import { mat4, } from "wgpu-matrix";
+import { loadImageBitmap } from "./util.ts";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -44,7 +45,6 @@ export class WebGPURenderer {
 
         const depthTexture = this.device.createTexture(depthTextureDsc);
         this.depthTextureView = depthTexture.createView();
-
 
         const positionBufferLayout: GPUVertexBufferLayout = {
             arrayStride: 3 * 4,
@@ -97,7 +97,12 @@ export class WebGPURenderer {
         const vertex: GPUVertexState = {
             module: vertexShaderModule,
             entryPoint: "main",
-            buffers: [positionBufferLayout, colorBufferLayout, nrmBufferLayour, uvBufferLayout],
+            buffers: [
+                positionBufferLayout,
+                colorBufferLayout,
+                nrmBufferLayour,
+                uvBufferLayout,
+            ],
         };
 
         const fragmentShaderModule = this.device.createShaderModule({
@@ -131,6 +136,29 @@ export class WebGPURenderer {
 
         this.pipeline = this.device.createRenderPipeline(pipelineDesc);
 
+        //TMP TO DELETE
+        const img = await loadImageBitmap("uv1.png");
+        console.log(img);
+
+        const texture = this.device.createTexture({
+            size: [img.width, img.height],
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+        });
+        
+        this.device.queue.copyExternalImageToTexture({ source: img}, {texture: texture}, [img.width, img.height]);
+
+        const texView = texture.createView();
+
+        const sampler = this.device.createSampler({
+            magFilter: "linear",
+            minFilter: "linear"
+        })
+
+
+        img.close();
+        //TMP TO DELETE
+
         this.uniformBuffer = this.device.createBuffer({
             size: 4 * 16, // 4x4 MVP * 4 bytes float
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -145,15 +173,21 @@ export class WebGPURenderer {
                         buffer: this.uniformBuffer,
                     },
                 },
+                {
+                    binding: 1, resource: sampler
+                },
+                {
+                    binding: 2, resource: texView
+                }
             ],
         });
     }
-
+    
     public renderFrame() {
         if (this.context == null) return;
         const encoder: GPUCommandEncoder = this.device.createCommandEncoder();
-
-
+        
+        
         const pass = encoder.beginRenderPass({
             colorAttachments: [
                 {
