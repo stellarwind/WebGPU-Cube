@@ -1,4 +1,3 @@
-
 @group(0) @binding(1) var albedoSampler: sampler;
 @group(0) @binding(2) var albedo: texture_2d<f32>;
 

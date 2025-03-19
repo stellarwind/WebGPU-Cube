@@ -1,7 +1,6 @@
 import { getDevice, getQueue, initializeGPU } from "./GPU.ts";
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
-import { Mesh } from "./mesh.ts";
 import { Entity } from "./entity.ts";
 import { mat4, } from "wgpu-matrix";
 import { loadImageBitmap } from "./util.ts";
