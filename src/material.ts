@@ -1,5 +1,6 @@
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
+import { getDevice } from "./GPU";
 
 class ShaderProperties {
     baseColor: [number, number, number];
@@ -33,6 +34,8 @@ export class Material {
     public readonly properties: ShaderProperties;
 
     constructor(props: ShaderProperties) {
+        let device = getDevice();
+
         this.properties = props;
         this.compileShader();
     }

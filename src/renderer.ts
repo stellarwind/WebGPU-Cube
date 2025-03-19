@@ -4,6 +4,7 @@ import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
 import { Entity } from "./entity.ts";
 import { mat4, } from "wgpu-matrix";
 import { loadImageBitmap } from "./util.ts";
+import { defaultSettings } from "./settings.ts";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -17,14 +18,22 @@ export class WebGPURenderer {
 
     private readonly entityList: Array<Entity> = [];
 
-    public async init() {
+    public async init(canvasId: string) {
+        const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+        if (canvas) {
+            canvas.width = defaultSettings.resolution.width;
+            canvas.height = defaultSettings.resolution.height;
+        } else {
+            return;
+        }
+
         await initializeGPU();
         this.device = getDevice();
         this.queue = getQueue();
 
         console.log("GPU Device initialized", this.device);
 
-        const canvas = document.querySelector("#viewport") as HTMLCanvasElement;
+        // const canvas = document.querySelector("#viewport") as HTMLCanvasElement;
         this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
         this.context = canvas.getContext("webgpu");
@@ -36,7 +45,7 @@ export class WebGPURenderer {
         });
 
         const depthTextureDsc: GPUTextureDescriptor = {
-            size: [canvas.width, canvas.height, 1],
+            size: [defaultSettings.resolution.width, defaultSettings.resolution.height, 1],
             dimension: "2d",
             format: "depth24plus-stencil8",
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
@@ -65,7 +74,8 @@ export class WebGPURenderer {
                     shaderLocation: 1,
                 },
             ],
-        };
+        }
+        ;
 
         const nrmBufferLayour: GPUVertexBufferLayout = {
             arrayStride: 3 * 4,
@@ -137,24 +147,17 @@ export class WebGPURenderer {
 
         //TMP TO DELETE
         const img = await loadImageBitmap("uv1.png");
-        console.log(img);
-
         const texture = this.device.createTexture({
             size: [img.width, img.height],
             format: "rgba8unorm",
             usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
         });
-        
         this.device.queue.copyExternalImageToTexture({ source: img}, {texture: texture}, [img.width, img.height]);
-
         const texView = texture.createView();
-
         const sampler = this.device.createSampler({
             magFilter: "linear",
             minFilter: "linear"
         })
-
-
         img.close();
         //TMP TO DELETE
 
@@ -209,7 +212,7 @@ export class WebGPURenderer {
         pass.setPipeline(this.pipeline);
 
         const fov = 60 * Math.PI / 180; 
-        const aspect = 512 / 512;
+        const aspect = defaultSettings.resolution.width / defaultSettings.resolution.height;
         const near = 0.1;
         const far = 1000.0;
 
@@ -262,18 +265,4 @@ export class WebGPURenderer {
         this.entityList.push(entity);
         return entity;
     }
-
-    private createTexture(imgBitmap: ImageBitmap): GPUTexture {
-        const texture = this.device.createTexture({
-            size: { width: imgBitmap.width, height: imgBitmap.height, depthOrArrayLayers: 1 },
-            format: "rgba8unorm",
-            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
-        });
-
-        this.device.queue.copyExternalImageToTexture({source: imgBitmap}, {texture: texture}, [imgBitmap.width, imgBitmap.height, 1]);
-
-        return texture;
-
-    }
-
 }
