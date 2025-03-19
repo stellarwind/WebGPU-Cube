@@ -1,52 +1,210 @@
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
-import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
+import unlitFragmentShaderCode from "./shaders/core_f.wgsl?raw";
 import { getDevice } from "./GPU";
+import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
+import { loadImageBitmap } from "./util";
 
-class ShaderProperties {
-    baseColor: [number, number, number];
-    metalness: [number, number, number];
-    roughness: [number, number, number];
-    specular: number;
-    emissiveColor: [number, number, number];
-
-    constructor(
-        baseColor: [number, number, number] = [0, 0, 0],
-        metalness: [number, number, number] = [0, 0, 0],
-        roughness: [number, number, number] = [0, 0, 0],
-        specular: number = 1,
-        emissiveColor: [number, number, number] = [0, 0, 0]
-    ) {
-        this.baseColor = baseColor;
-        this.metalness = metalness;
-        this.roughness = roughness;
-        this.specular = specular;
-        this.emissiveColor = emissiveColor;
-    }
+interface ShaderProperties {
+    textures: Record<string, GPUTexture>;
+    scalars: Record<string, number | Vec2 | Vec3 | Vec4>;
 }
 
-export class Material {
+class Material {
     private pipeline!: GPURenderPipeline;
+
+    get getPipeline(): GPURenderPipeline {
+        return this.pipeline;
+    }
+
     private bindGroupLayout!: GPUBindGroupLayout;
     private bindGroup!: GPUBindGroup;
 
     private assembledShaderModule!: GPUShaderModule;
 
+    private vertexCode: string = "";
+    private fragmentCode: string = "";
+
     public readonly properties: ShaderProperties;
+    uniformBuffer!: GPUBuffer;
+    uniformBufferBindGroup!: GPUBindGroup;
 
-    constructor(props: ShaderProperties) {
-        let device = getDevice();
-
+    constructor(props: ShaderProperties, vert: string, frag: string) {
         this.properties = props;
+        this.fragmentCode = frag;
+        this.vertexCode = vert;
         this.compileShader();
     }
 
+    generateBindGroupHeader = (): string => {
+        const entries: GPUBindGroupEntry[] = [];
+        let i = 0;
+        for (const key in this.properties) {
+            entries.push({
+                binding: i,
+                resource: this.properties.scalars[key]
+            })
+        }
+        return "";
+    };
+    generateVertexBuffer = (): [GPUVertexState, GPUFragmentState] => {
+        const positionBufferLayout: GPUVertexBufferLayout = {
+            arrayStride: 3 * 4,
+            attributes: [
+                {
+                    format: "float32x3",
+                    offset: 0,
+                    shaderLocation: 0,
+                },
+            ],
+        };
+        const colorBufferLayout: GPUVertexBufferLayout = {
+            arrayStride: 3 * 4,
+            attributes: [
+                {
+                    format: "float32x3",
+                    offset: 0,
+                    shaderLocation: 1,
+                },
+            ],
+        };
+        const nrmBufferLayour: GPUVertexBufferLayout = {
+            arrayStride: 3 * 4,
+            attributes: [
+                {
+                    shaderLocation: 2,
+                    format: "float32x3",
+                    offset: 0,
+                },
+            ],
+        };
+        const uvBufferLayout: GPUVertexBufferLayout = {
+            arrayStride: 2 * 4,
+            attributes: [
+                {
+                    shaderLocation: 3,
+                    format: "float32x2",
+                    offset: 0,
+                },
+            ],
+        };
+
+        const vertex: GPUVertexState = {
+        module: this.assembledShaderModule,
+        entryPoint: "vertex_main",
+            buffers: [
+                positionBufferLayout,
+                colorBufferLayout,
+                nrmBufferLayour,
+                uvBufferLayout,
+            ],
+        };
+
+        const fragment: GPUFragmentState = {
+            module: this.assembledShaderModule,
+            entryPoint: "main",
+            targets: [{ format: "bgra8unorm"}],
+        };
+
+        return [vertex, fragment];
+
+    };
+
+     generateUniformBuffer = async () => {
+        const img = await loadImageBitmap("uv1.png");
+        const texture = getDevice().createTexture({
+            size: [img.width, img.height],
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
+        });
+        getDevice().queue.copyExternalImageToTexture({ source: img}, {texture: texture}, [img.width, img.height]);
+        const texView = texture.createView();
+        const sampler = getDevice().createSampler({
+            magFilter: "linear",
+            minFilter: "linear"
+        })
+        img.close();
+
+        this.uniformBuffer = getDevice().createBuffer({
+            size: 4 * 16, // 4x4 MVP * 4 bytes float
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+
+        this.uniformBufferBindGroup = getDevice().createBindGroup({
+            layout: this.pipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.uniformBuffer,
+                    },
+                },
+                {
+                    binding: 1, resource: sampler
+                },
+                {
+                    binding: 2, resource: texView
+                }
+            ],
+        });
+    }
+
+    generatePipeline = () => {
+
+        const primitive: GPUPrimitiveState = {
+            cullMode: "none",
+            topology: "triangle-list",
+        };
+
+        const depthStencil: GPUDepthStencilState = {
+            depthWriteEnabled: true,
+            depthCompare: "less",
+            format: "depth24plus-stencil8",
+        };
+
+        const [vertex, fragment] = this.generateVertexBuffer();
+
+        const pipelineDesc: GPURenderPipelineDescriptor = {
+            layout: "auto",
+            vertex,
+            fragment,
+            primitive,
+            depthStencil,
+        };
+
+        this.pipeline = getDevice().createRenderPipeline(pipelineDesc);
+    };
+
     compileShader = () => {
-        const bindgroupsHeader = " ";
-        const vertfrag =
-            bindgroupsHeader +
-            "\n" +
-            vertexShaderCode +
-            "\n" +
-            fragmentShaderCode;
+        const bindGroupHeader = this.generateBindGroupHeader();
+        const shaderSource = `
+        ${bindGroupHeader}
+
+        ${this.vertexCode}
+
+        ${this.fragmentCode}
+        `;
+
+        try {
+            this.assembledShaderModule = getDevice().createShaderModule({
+                code: shaderSource,
+            });
+        } catch (error) {
+            console.error(error);
+        }
     };
 }
+
+const unlitProperties: ShaderProperties = {
+    textures: {
+        albedo: getDevice().createTexture({
+            size: [512, 512, 1],
+            format: "rgba8unorm",
+            usage: GPUTextureUsage.TEXTURE_BINDING,
+        }),
+    },
+    scalars: {
+        baseColor: vec3.fromValues(1, 1, 1),
+    },
+};
+
+export const unlitMaterial = new Material(unlitProperties, vertexShaderCode, unlitFragmentShaderCode);
