@@ -1,4 +1,5 @@
-import { getDevice, getQueue } from "./GPU";
+import { getDevice, getQueue } from "./globalresources";
+import { Material, unlitMaterial } from "./material";
 
 export class Mesh {
     public readonly positionBuffer!: GPUBuffer;
@@ -13,6 +14,12 @@ export class Mesh {
     private normals!: Float32Array;
     private uvs!: Float32Array;
 
+    private material!: Material;
+
+    public get getMaterial() {
+        return this.material;
+    }
+
     public get indexCount(): number {
         return this.indices.length;
     }
@@ -26,6 +33,9 @@ export class Mesh {
         normals: Array<number> | null = null,
         uvs: Array<number> | null = null
     ) {
+
+        this.material = unlitMaterial;
+
         // Positions
         this.positions = new Float32Array(verts);
         this.positionBuffer = getDevice().createBuffer({
@@ -94,4 +104,5 @@ export class Mesh {
         });
         getQueue().writeBuffer(this.uvBuffer, 0, this.uvs);
     }
+
 }

@@ -1,24 +1,19 @@
-import { getDevice, getQueue, initializeGPU } from "./GPU.ts";
-import vertexShaderCode from "./shaders/core_v.wgsl?raw";
-import fragmentShaderCode from "./shaders/core_f.wgsl?raw";
-import { Entity } from "./entity.ts";
+import { getDevice, getQueue, getDepthTextureView, initResources} from "./globalresources";
+import { Entity } from "./entity";
 import { mat4, } from "wgpu-matrix";
-import { loadImageBitmap } from "./util.ts";
-import { defaultSettings } from "./settings.ts";
+import { defaultSettings } from "./settings";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
     private canvasFormat!: GPUTextureFormat;
-    private device!: GPUDevice;
-    private queue!: GPUQueue;
-    private pipeline!: GPURenderPipeline;
     private uniformBuffer!: GPUBuffer;
     private uniformBufferBindGroup!: GPUBindGroup;
-    private depthTextureView!: GPUTextureView;
 
     private readonly entityList: Array<Entity> = [];
 
     public async init(canvasId: string) {
+        await initResources();
+
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         if (canvas) {
             canvas.width = defaultSettings.resolution.width;
@@ -27,169 +22,23 @@ export class WebGPURenderer {
             return;
         }
 
-        await initializeGPU();
-        this.device = getDevice();
-        this.queue = getQueue();
+        console.log("GPU Device initialized", getDevice());
 
-        console.log("GPU Device initialized", this.device);
-
-        // const canvas = document.querySelector("#viewport") as HTMLCanvasElement;
         this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
         this.context = canvas.getContext("webgpu");
         if (this.context == null) return;
 
         this.context.configure({
-            device: this.device,
+            device: getDevice(),
             format: this.canvasFormat,
         });
-
-        const depthTextureDsc: GPUTextureDescriptor = {
-            size: [defaultSettings.resolution.width, defaultSettings.resolution.height, 1],
-            dimension: "2d",
-            format: "depth24plus-stencil8",
-            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-        };
-
-        const depthTexture = this.device.createTexture(depthTextureDsc);
-        this.depthTextureView = depthTexture.createView();
-
-        const positionBufferLayout: GPUVertexBufferLayout = {
-            arrayStride: 3 * 4,
-            attributes: [
-                {
-                    format: "float32x3",
-                    offset: 0,
-                    shaderLocation: 0,
-                },
-            ],
-        };
-
-        const colorBufferLayout: GPUVertexBufferLayout = {
-            arrayStride: 3 * 4,
-            attributes: [
-                {
-                    format: "float32x3",
-                    offset: 0,
-                    shaderLocation: 1,
-                },
-            ],
-        }
-        ;
-
-        const nrmBufferLayour: GPUVertexBufferLayout = {
-            arrayStride: 3 * 4,
-            attributes: [
-                {
-                    shaderLocation: 2,
-                    format: "float32x3",
-                    offset: 0,
-                },
-            ],
-        };
-
-        const uvBufferLayout: GPUVertexBufferLayout = {
-            arrayStride: 2 * 4,
-            attributes: [
-                {
-                    shaderLocation: 3,
-                    format: "float32x2",
-                    offset: 0,
-                },
-            ],
-        };
-
-        const vertexShaderModule = this.device.createShaderModule({
-            code: vertexShaderCode,
-        });
-
-        const vertex: GPUVertexState = {
-            module: vertexShaderModule,
-            entryPoint: "main",
-            buffers: [
-                positionBufferLayout,
-                colorBufferLayout,
-                nrmBufferLayour,
-                uvBufferLayout,
-            ],
-        };
-
-        const fragmentShaderModule = this.device.createShaderModule({
-            code: fragmentShaderCode,
-        });
-
-        const fragment: GPUFragmentState = {
-            module: fragmentShaderModule,
-            entryPoint: "main",
-            targets: [{ format: this.canvasFormat }],
-        };
-
-        const primitive: GPUPrimitiveState = {
-            cullMode: "none",
-            topology: "triangle-list",
-        };
-
-        const depthStencil: GPUDepthStencilState = {
-            depthWriteEnabled: true,
-            depthCompare: "less",
-            format: "depth24plus-stencil8",
-        };
-
-        const pipelineDesc: GPURenderPipelineDescriptor = {
-            layout: "auto",
-            vertex,
-            fragment,
-            primitive,
-            depthStencil,
-        };
-
-        this.pipeline = this.device.createRenderPipeline(pipelineDesc);
-
-        //TMP TO DELETE
-        const img = await loadImageBitmap("uv1.png");
-        const texture = this.device.createTexture({
-            size: [img.width, img.height],
-            format: "rgba8unorm",
-            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
-        });
-        this.device.queue.copyExternalImageToTexture({ source: img}, {texture: texture}, [img.width, img.height]);
-        const texView = texture.createView();
-        const sampler = this.device.createSampler({
-            magFilter: "linear",
-            minFilter: "linear"
-        })
-        img.close();
-        //TMP TO DELETE
-
-        this.uniformBuffer = this.device.createBuffer({
-            size: 4 * 16, // 4x4 MVP * 4 bytes float
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-
-        this.uniformBufferBindGroup = this.device.createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(0),
-            entries: [
-                {
-                    binding: 0,
-                    resource: {
-                        buffer: this.uniformBuffer,
-                    },
-                },
-                {
-                    binding: 1, resource: sampler
-                },
-                {
-                    binding: 2, resource: texView
-                }
-            ],
-        });
     }
-    
+
     public renderFrame() {
         if (this.context == null) return;
-        const encoder: GPUCommandEncoder = this.device.createCommandEncoder();
-        
-        
+        const encoder: GPUCommandEncoder = getDevice().createCommandEncoder();
+
         const pass = encoder.beginRenderPass({
             colorAttachments: [
                 {
@@ -199,7 +48,7 @@ export class WebGPURenderer {
                 },
             ],
             depthStencilAttachment: {
-                view: this.depthTextureView,
+                view: getDepthTextureView(),
                 depthLoadOp: "clear",
                 depthStoreOp: "store",
                 stencilLoadOp: "clear",
@@ -209,37 +58,42 @@ export class WebGPURenderer {
             },
         });
 
-        pass.setPipeline(this.pipeline);
-
-        const fov = 60 * Math.PI / 180; 
-        const aspect = defaultSettings.resolution.width / defaultSettings.resolution.height;
+        
+        // TODO Move to Camera class
+        const fov = (60 * Math.PI) / 180;
+        const aspect =
+        defaultSettings.resolution.width /
+        defaultSettings.resolution.height;
         const near = 0.1;
         const far = 1000.0;
-
+        
         const projectionMatrix = mat4.perspective(fov, aspect, near, far);
-
+        
         const viewMat = mat4.lookAt(
             [0, 0, 0], //eye
-            [0, 0, -1],  //target
-            [0, 1, 0]   //up
+            [0, 0, -1], //target
+            [0, 1, 0] //up
         );
-
+        // ENDTODO
+        
         for (let i = 0; i < this.entityList.length; i++) {
-            
-            this.entityList[i].calculateMVPMatrix(
-                viewMat,
-                projectionMatrix
-            );
-            
+            const pipe = this.entityList[i].mesh?.getMaterial.getPipeline;
+
+            if (pipe === undefined) return;
+
+            pass.setPipeline(pipe);
+
+            this.entityList[i].calculateMVPMatrix(viewMat, projectionMatrix);
+
             const mvpArray = new Float32Array(this.entityList[i].mvpMatrix);
-            this.device.queue.writeBuffer(
+            getQueue().writeBuffer(
                 this.uniformBuffer,
                 0,
                 mvpArray.buffer,
                 mvpArray.byteOffset,
                 mvpArray.byteLength
             );
-            
+
             const mesh = this.entityList[i].mesh;
             if (mesh === null) continue;
 
@@ -257,7 +111,7 @@ export class WebGPURenderer {
         pass.end();
 
         const commandBuffer = encoder.finish();
-        this.queue.submit([commandBuffer]);
+        getQueue().submit([commandBuffer]);
     }
 
     public addEntity(): Entity {

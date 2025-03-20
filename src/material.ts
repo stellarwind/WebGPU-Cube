@@ -1,6 +1,6 @@
 import vertexShaderCode from "./shaders/core_v.wgsl?raw";
 import unlitFragmentShaderCode from "./shaders/core_f.wgsl?raw";
-import { getDevice } from "./GPU";
+import { getDevice, primitive, depthStencil } from "./globalresources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
 
@@ -9,10 +9,10 @@ interface ShaderProperties {
     scalars: Record<string, number | Vec2 | Vec3 | Vec4>;
 }
 
-class Material {
+export class Material {
     private pipeline!: GPURenderPipeline;
 
-    get getPipeline(): GPURenderPipeline {
+    public get getPipeline(): GPURenderPipeline {
         return this.pipeline;
     }
 
@@ -35,17 +35,10 @@ class Material {
         this.compileShader();
     }
 
-    generateBindGroupHeader = (): string => {
-        const entries: GPUBindGroupEntry[] = [];
-        let i = 0;
-        for (const key in this.properties) {
-            entries.push({
-                binding: i,
-                resource: this.properties.scalars[key]
-            })
-        }
-        return "";
-    };
+    // generateBindGroupHeader = (): string => {
+    //     const entries: GPUBindGroupEntry[] = [];
+    //     return "";
+    // };
     generateVertexBuffer = (): [GPUVertexState, GPUFragmentState] => {
         const positionBufferLayout: GPUVertexBufferLayout = {
             arrayStride: 3 * 4,
@@ -106,7 +99,6 @@ class Material {
         };
 
         return [vertex, fragment];
-
     };
 
      generateUniformBuffer = async () => {
@@ -149,18 +141,6 @@ class Material {
     }
 
     generatePipeline = () => {
-
-        const primitive: GPUPrimitiveState = {
-            cullMode: "none",
-            topology: "triangle-list",
-        };
-
-        const depthStencil: GPUDepthStencilState = {
-            depthWriteEnabled: true,
-            depthCompare: "less",
-            format: "depth24plus-stencil8",
-        };
-
         const [vertex, fragment] = this.generateVertexBuffer();
 
         const pipelineDesc: GPURenderPipelineDescriptor = {
@@ -168,7 +148,7 @@ class Material {
             vertex,
             fragment,
             primitive,
-            depthStencil,
+            depthStencil
         };
 
         this.pipeline = getDevice().createRenderPipeline(pipelineDesc);
