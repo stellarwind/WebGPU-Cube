@@ -2,8 +2,6 @@ struct Uniforms {
     mvpMatrix: mat4x4f
 }
 
-@binding(0) @group(0) var<uniform> uniforms : Uniforms;
-
 struct VSOut {
     @builtin(position) Position: vec4f,
     @location(0) color: vec3f,
@@ -11,7 +9,7 @@ struct VSOut {
  };
 
 @vertex
-fn main(@location(0) inPos: vec4f,
+fn main_vert(@location(0) inPos: vec4f,
         @location(1) inColor: vec3f,
         @location(2) inNrm: vec3f,
         @location(3) inUV: vec2f) -> VSOut {

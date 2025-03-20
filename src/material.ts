@@ -43,18 +43,15 @@ export class Material {
         this.properties = props;
         this.fragmentCode = frag;
         this.vertexCode = vert;
+        
+        this.compileShader();
+
+        this.generatePipeline();
 
         this.generateCommonBindGroup();
         this.generateMaterialBindGroup();
-        this.generatePipeline();
 
-        this.compileShader();
     }
-
-    // generateBindGroupHeader = (): string => {
-    //     const entries: GPUBindGroupEntry[] = [];
-    //     return "";
-    // };
 
     generateStates = (): [GPUVertexState, GPUFragmentState] => {
         const positionBufferLayout: GPUVertexBufferLayout = {
@@ -100,7 +97,7 @@ export class Material {
 
         const vertex: GPUVertexState = {
             module: this.assembledShaderModule,
-            entryPoint: "vertex_main",
+            entryPoint: "main_vert",
             buffers: [
                 positionBufferLayout,
                 colorBufferLayout,
@@ -111,7 +108,7 @@ export class Material {
 
         const fragment: GPUFragmentState = {
             module: this.assembledShaderModule,
-            entryPoint: "main",
+            entryPoint: "main_frag",
             targets: [{ format: "bgra8unorm" }],
         };
 
@@ -160,20 +157,14 @@ export class Material {
         img.close();
 
         this.materialBindGroup = getDevice().createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(0),
+            layout: this.pipeline.getBindGroupLayout(1),
             entries: [
                 {
                     binding: 0,
-                    resource: {
-                        buffer: this.MVPUniformBuffer,
-                    },
-                },
-                {
-                    binding: 1,
                     resource: sampler,
                 },
                 {
-                    binding: 2,
+                    binding: 1,
                     resource: texView,
                 },
             ],
@@ -199,19 +190,22 @@ export class Material {
 
         //TODO this one should be generated
         const bindGroupHeader1 = `
-            @group(1) @binding(1) var albedoSampler: sampler;
-            @group(1) @binding(2) var albedo: texture_2d<f32>;
+            @group(1) @binding(0) var albedoSampler: sampler;
+            @group(1) @binding(1) var albedo: texture_2d<f32>;
             `;
 
         const shaderSource = `
         ${bindGroupHeader0}
-
         ${bindGroupHeader1}
 
+        
         ${this.vertexCode}
+        
 
         ${this.fragmentCode}
         `;
+
+        console.log(shaderSource);
 
         try {
             this.assembledShaderModule = getDevice().createShaderModule({
