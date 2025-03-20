@@ -2,12 +2,15 @@ import { getDevice, getQueue, getDepthTextureView, initResources} from "./global
 import { Entity } from "./entity";
 import { mat4, } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
+import { Camera } from "./camera";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
     private canvasFormat!: GPUTextureFormat;
 
     private readonly entityList: Array<Entity> = [];
+
+    private mainCam: Camera = new Camera;
 
     public async init(canvasId: string) {
         await initResources();
@@ -35,6 +38,7 @@ export class WebGPURenderer {
 
     public renderFrame() {
         if (this.context == null) return;
+
         const encoder: GPUCommandEncoder = getDevice().createCommandEncoder();
 
         const pass = encoder.beginRenderPass({
@@ -56,24 +60,8 @@ export class WebGPURenderer {
             },
         });
 
-        
-        // TODO Move to Camera class
-        const fov = (60 * Math.PI) / 180;
-        const aspect =
-        defaultSettings.resolution.width /
-        defaultSettings.resolution.height;
-        const near = 0.1;
-        const far = 1000.0;
-        
-        const projectionMatrix = mat4.perspective(fov, aspect, near, far);
-        
-        const viewMat = mat4.lookAt(
-            [0, 0, 0], //eye
-            [0, 0, -1], //target
-            [0, 1, 0] //up
-        );
-        // ENDTODO
-        
+        let [viewMatrix, projectionMatrix] = this.mainCam.update();
+
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i].mesh;
 
@@ -85,7 +73,7 @@ export class WebGPURenderer {
 
             pass.setPipeline(pipe);
 
-            this.entityList[i].calculateMVPMatrix(viewMat, projectionMatrix);
+            this.entityList[i].calculateMVPMatrix(viewMatrix, projectionMatrix);
 
             const mvpArray = new Float32Array(this.entityList[i].mvpMatrix);
             getQueue().writeBuffer(

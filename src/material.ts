@@ -205,7 +205,7 @@ export class Material {
         ${this.fragmentCode}
         `;
 
-        console.log(shaderSource);
+        // console.log(shaderSource);
 
         try {
             this.assembledShaderModule = getDevice().createShaderModule({
