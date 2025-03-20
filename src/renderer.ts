@@ -6,8 +6,6 @@ import { defaultSettings } from "./settings";
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
     private canvasFormat!: GPUTextureFormat;
-    private uniformBuffer!: GPUBuffer;
-    private uniformBufferBindGroup!: GPUBindGroup;
 
     private readonly entityList: Array<Entity> = [];
 
@@ -77,7 +75,11 @@ export class WebGPURenderer {
         // ENDTODO
         
         for (let i = 0; i < this.entityList.length; i++) {
-            const pipe = this.entityList[i].mesh?.getMaterial.getPipeline;
+            const mesh = this.entityList[i].mesh;
+
+            if (mesh === null) continue;
+
+            const pipe = mesh.getMaterial.getPipeline;
 
             if (pipe === undefined) return;
 
@@ -87,17 +89,19 @@ export class WebGPURenderer {
 
             const mvpArray = new Float32Array(this.entityList[i].mvpMatrix);
             getQueue().writeBuffer(
-                this.uniformBuffer,
+                mesh.getMaterial.getMVPUniformBuffer,
                 0,
                 mvpArray.buffer,
                 mvpArray.byteOffset,
                 mvpArray.byteLength
             );
 
-            const mesh = this.entityList[i].mesh;
-            if (mesh === null) continue;
+            
+            const commondBindGrp = mesh.getMaterial.getCommonBindGroup;
+            const matBindGrp = mesh.getMaterial.getMaterialBindGroup;
 
-            pass.setBindGroup(0, this.uniformBufferBindGroup);
+            pass.setBindGroup(0, commondBindGrp);
+            pass.setBindGroup(1, matBindGrp);
 
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);

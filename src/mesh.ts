@@ -1,5 +1,5 @@
 import { getDevice, getQueue } from "./globalresources";
-import { Material, unlitMaterial } from "./material";
+import { Material, createUnlitMaterial } from "./material";
 
 export class Mesh {
     public readonly positionBuffer!: GPUBuffer;
@@ -34,7 +34,7 @@ export class Mesh {
         uvs: Array<number> | null = null
     ) {
 
-        this.material = unlitMaterial;
+        this.material = createUnlitMaterial();
 
         // Positions
         this.positions = new Float32Array(verts);
