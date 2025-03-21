@@ -62,13 +62,12 @@ export class WebGPURenderer {
         let [viewMatrix, projectionMatrix] = this.mainCam.update();
 
         for (let i = 0; i < this.entityList.length; i++) {
-            const mesh = this.entityList[i].mesh;
-            if (mesh === null) continue;
-            
-            const pipe = mesh.getMaterial.getPipeline;
-            if (pipe === undefined) continue;
 
-            if (!mesh.getMaterial.ready) continue;
+            const mesh = this.entityList[i]?.mesh;
+            const material = mesh?.getMaterial;
+            const pipe = material?.getPipeline;
+            
+            if (!mesh || !pipe || !material.ready) continue;
 
             pass.setPipeline(pipe);
 

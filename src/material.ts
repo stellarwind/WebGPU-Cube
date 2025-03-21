@@ -40,8 +40,7 @@ export class Material {
     }
 
     get ready() {
-        return this.pipeline != undefined &&
-        this.commonBindGroup != undefined &&
+        return this.commonBindGroup != undefined &&
         this.materialBindGroup != undefined
     }
 
