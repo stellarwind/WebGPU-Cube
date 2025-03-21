@@ -39,6 +39,12 @@ export class Material {
         return this.materialBindGroup;
     }
 
+    get ready() {
+        return this.pipeline != undefined &&
+        this.commonBindGroup != undefined &&
+        this.materialBindGroup != undefined
+    }
+
     constructor(props: ShaderProperties, vert: string, frag: string) {
         this.properties = props;
         this.fragmentCode = frag;

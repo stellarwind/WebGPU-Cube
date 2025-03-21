@@ -22,11 +22,20 @@ export class Camera {
     public set setFar (value: number) {
         this.far = Math.max(this.near + 0.001, value);
     }
-    
+
     private projectionMatrix = mat4.perspective(this.fov, this.aspect, this.near, this.far);
 
     private cameraPos: Vec3 = vec3.fromValues(0, 0 , 0);
+
+    public set setCameraPos(value: Vec3) {
+        if (value != this.targetPos) this.cameraPos = value;
+    }
+
     private targetPos: Vec3 = vec3.fromValues(0, 0, -1);
+
+    public set setTargetPos(value: Vec3) {
+        if (value != this.cameraPos) this.targetPos = value;
+    }
     
     private viewMatrix = mat4.lookAt(
         this.cameraPos,

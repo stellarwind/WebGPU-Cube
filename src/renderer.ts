@@ -1,6 +1,5 @@
 import { getDevice, getQueue, getDepthTextureView, initResources} from "./globalresources";
 import { Entity } from "./entity";
-import { mat4, } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
 
@@ -64,12 +63,12 @@ export class WebGPURenderer {
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i].mesh;
-
             if (mesh === null) continue;
-
+            
             const pipe = mesh.getMaterial.getPipeline;
+            if (pipe === undefined) continue;
 
-            if (pipe === undefined) return;
+            if (!mesh.getMaterial.ready) continue;
 
             pass.setPipeline(pipe);
 
