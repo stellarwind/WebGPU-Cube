@@ -40,22 +40,23 @@ export class Material {
     }
 
     get ready() {
-        return this.commonBindGroup != undefined &&
-        this.materialBindGroup != undefined
+        return (
+            this.commonBindGroup != undefined &&
+            this.materialBindGroup != undefined
+        );
     }
 
     constructor(props: ShaderProperties, vert: string, frag: string) {
         this.properties = props;
         this.fragmentCode = frag;
         this.vertexCode = vert;
-        
+
         this.compileShader();
 
         this.generatePipeline();
 
         this.generateCommonBindGroup();
         this.generateMaterialBindGroup();
-
     }
 
     generateStates = (): [GPUVertexState, GPUFragmentState] => {
@@ -222,7 +223,6 @@ export class Material {
     };
 }
 
-
 export const createUnlitMaterial = (): Material => {
     const unlitProperties: ShaderProperties = {
         textures: {
@@ -242,4 +242,3 @@ export const createUnlitMaterial = (): Material => {
         unlitFragmentShaderCode
     );
 };
-

@@ -6,7 +6,7 @@ export class Camera {
 
     public set setFOV(value: number) {
         this.fov = (value * Math.PI) / 180;
-    } 
+    }
 
     private aspect =
         defaultSettings.resolution.width / defaultSettings.resolution.height;
@@ -19,13 +19,18 @@ export class Camera {
 
     private far = 1000.0;
 
-    public set setFar (value: number) {
+    public set setFar(value: number) {
         this.far = Math.max(this.near + 0.001, value);
     }
 
-    private projectionMatrix = mat4.perspective(this.fov, this.aspect, this.near, this.far);
+    private projectionMatrix = mat4.perspective(
+        this.fov,
+        this.aspect,
+        this.near,
+        this.far
+    );
 
-    private cameraPos: Vec3 = vec3.fromValues(0, 0 , 0);
+    private cameraPos: Vec3 = vec3.fromValues(0, 0, 0);
 
     public set setCameraPos(value: Vec3) {
         if (value != this.targetPos) this.cameraPos = value;
@@ -36,7 +41,7 @@ export class Camera {
     public set setTargetPos(value: Vec3) {
         if (value != this.cameraPos) this.targetPos = value;
     }
-    
+
     private viewMatrix = mat4.lookAt(
         this.cameraPos,
         this.targetPos,

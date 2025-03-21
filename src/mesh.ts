@@ -33,7 +33,6 @@ export class Mesh {
         normals: Array<number> | null = null,
         uvs: Array<number> | null = null
     ) {
-
         this.material = createUnlitMaterial();
 
         // Positions
@@ -104,5 +103,4 @@ export class Mesh {
         });
         getQueue().writeBuffer(this.uvBuffer, 0, this.uvs);
     }
-
 }

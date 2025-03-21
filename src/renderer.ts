@@ -1,4 +1,9 @@
-import { getDevice, getQueue, getDepthTextureView, initResources} from "./globalresources";
+import {
+    getDevice,
+    getQueue,
+    getDepthTextureView,
+    initResources,
+} from "./globalresources";
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
@@ -9,7 +14,7 @@ export class WebGPURenderer {
 
     private readonly entityList: Array<Entity> = [];
 
-    private mainCam: Camera = new Camera;
+    private mainCam: Camera = new Camera();
 
     public async init(canvasId: string) {
         await initResources();
@@ -62,11 +67,10 @@ export class WebGPURenderer {
         let [viewMatrix, projectionMatrix] = this.mainCam.update();
 
         for (let i = 0; i < this.entityList.length; i++) {
-
             const mesh = this.entityList[i]?.mesh;
             const material = mesh?.getMaterial;
             const pipe = material?.getPipeline;
-            
+
             if (!mesh || !pipe || !material.ready) continue;
 
             pass.setPipeline(pipe);
@@ -82,7 +86,6 @@ export class WebGPURenderer {
                 mvpArray.byteLength
             );
 
-            
             const commondBindGrp = mesh.getMaterial.getCommonBindGroup;
             const matBindGrp = mesh.getMaterial.getMaterialBindGroup;
 

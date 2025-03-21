@@ -7,11 +7,11 @@ let depthTextureView: GPUTextureView;
 
 export async function initResources() {
     const adapter: GPUAdapter | null = await navigator.gpu.requestAdapter();
-    
+
     if (!adapter) {
         throw new Error("No appropriate GPU Adapter found!");
     }
-    
+
     device = await adapter.requestDevice();
     queue = device.queue;
 
@@ -37,7 +37,7 @@ export const depthStencil: GPUDepthStencilState = {
 };
 
 function initDepthTexture() {
-    depthTexture =  device.createTexture({
+    depthTexture = device.createTexture({
         size: [
             defaultSettings.resolution.width,
             defaultSettings.resolution.height,
@@ -49,8 +49,8 @@ function initDepthTexture() {
     });
 
     depthTextureView = depthTexture.createView();
-} 
-    
+}
+
 export function getDepthTextureView(): GPUTextureView {
     return depthTexture.createView();
-} 
+}
