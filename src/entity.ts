@@ -49,4 +49,8 @@ export class Entity {
         this.position = [x, y, z];
     }
 
+    public rotate (x = 0, y = 0, z = 0) {
+        this.rotation = [x, y, z];
+    }
+
 }

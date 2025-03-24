@@ -26,7 +26,7 @@ export function getQueue(): GPUQueue {
     return queue;
 }
 export const primitive: GPUPrimitiveState = {
-    cullMode: "back",
+    cullMode: "none",
     topology: "triangle-list",
 };
 
