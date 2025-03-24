@@ -7,6 +7,7 @@ import {
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
+import { Input } from "./input.";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -26,6 +27,8 @@ export class WebGPURenderer {
         } else {
             return;
         }
+
+        const inp = new Input(canvasId);
 
         console.log("GPU Device initialized", getDevice());
 
