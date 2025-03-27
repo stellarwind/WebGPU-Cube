@@ -142,21 +142,19 @@ const positions = [
         -1.0, 0.0, 0.0,  
         -1.0, 0.0, 0.0,
     ];
-
     const indices = [
-        0, 1, 2,  
-        0, 2, 3,  
-        4, 6, 5,  
-        4, 7, 6,
-        8, 9, 10,  
-        8, 10, 11,  
-        12, 15, 14,  
-        12, 14, 13,
-        16, 17, 18,  
-        16, 18, 19,  
-        20, 23, 22,  
-        20, 22, 21
+        // Front face
+        0, 1, 2, 0, 2, 3,
+        // Back face
+        4, 7, 6, 4, 6, 5,
+        // Top face
+        8, 9, 10, 8, 10, 11,
+        // Bottom face
+        12, 14, 13, 12, 15, 14,
+        // Right face
+        16, 19, 18, 16, 18, 17,
+        // Left face
+        20, 21, 22, 20, 22, 23,
     ];
-
     return new Mesh(positions, indices, colors, normals, uvs);
 }

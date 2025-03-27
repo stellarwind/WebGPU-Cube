@@ -68,6 +68,7 @@ export class Camera {
     }
 
     public getMatrices(): [Mat4, Mat4] {
+        // return [this.projectionMatrix, this.viewMatrix];
         return [this.projectionMatrix, mat4.invert(this.viewMatrix)];
     }
 }

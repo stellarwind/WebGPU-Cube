@@ -24,7 +24,7 @@
             entity.addMesh(generateCube());
             entity.translate(0, 0, -5);
             entity.setScale(1, 2, 1);
-            entity.rotate(0.5, 0.6, 0);
+            entity.rotate(45 * 3.14 / 180, 45 * 3.14 / 180, 0);
 
             let lastFrameTime = performance.now();
             const renderLoop = () => {
