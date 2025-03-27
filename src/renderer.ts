@@ -16,6 +16,7 @@ export class WebGPURenderer {
     private readonly entityList: Array<Entity> = [];
 
     private mainCam: Camera = new Camera();
+    private inputManager!: Input;
 
     public async init(canvasId: string) {
         await initResources();
@@ -28,7 +29,7 @@ export class WebGPURenderer {
             return;
         }
 
-        const inp = new Input(canvasId);
+        this.inputManager = new Input(canvasId);
 
         console.log("GPU Device initialized", getDevice());
 
@@ -67,7 +68,12 @@ export class WebGPURenderer {
             },
         });
 
-        let [viewMatrix, projectionMatrix] = this.mainCam.update();
+        let mouseX = this.inputManager.x;
+        let mouseY = this.inputManager.y;
+
+        this.mainCam.orbit(mouseX * Math.PI / 180, mouseY * Math.PI / 180, 1);
+
+        let [viewMatrix, projectionMatrix] = this.mainCam.getMatrices();
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i]?.mesh;

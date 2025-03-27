@@ -5,6 +5,14 @@ export class Input {
     private deltaX: number = 0;
     private deltaY: number = 0;
 
+    public get x() {
+        return this.deltaX;
+    }
+
+    public get y() {
+        return this.deltaY;
+    }
+
     constructor(canvasId: string) {
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         if (!this.canvas) {
