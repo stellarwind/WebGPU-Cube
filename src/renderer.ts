@@ -3,11 +3,13 @@ import {
     getQueue,
     getDepthTextureView,
     initResources,
+    projectionMatrix,
 } from "./globalresources";
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
-import { Camera } from "./camera";
-import { Input } from "./input.";
+import { ArcballCamera } from "./camera";
+import { createInputHandler, InputHandler } from "./input";
+import { vec3 } from "wgpu-matrix";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -15,12 +17,14 @@ export class WebGPURenderer {
 
     private readonly entityList: Array<Entity> = [];
 
-    private mainCam: Camera = new Camera();
-    private inputManager!: Input;
+    private mainCam!: ArcballCamera;
+
+    private lastFrameMS: number = Date.now();
+
+    private inputHandler!: InputHandler;
 
     public async init(canvasId: string) {
         await initResources();
-
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         if (canvas) {
             canvas.width = defaultSettings.resolution.width;
@@ -29,7 +33,7 @@ export class WebGPURenderer {
             return;
         }
 
-        this.inputManager = new Input(canvasId);
+        this.inputHandler = createInputHandler(window, canvas);
 
         console.log("GPU Device initialized", getDevice());
 
@@ -42,10 +46,19 @@ export class WebGPURenderer {
             device: getDevice(),
             format: this.canvasFormat,
         });
+
+        const initialCameraPosition = vec3.create(3, 2, 5);
+        
+
+        this.mainCam = new ArcballCamera({position: initialCameraPosition});
     }
 
     public renderFrame() {
         if (this.context == null) return;
+
+        const now = Date.now();
+        const deltaTime = (now - this.lastFrameMS) / 1000;
+        this.lastFrameMS = now;
 
         const encoder: GPUCommandEncoder = getDevice().createCommandEncoder();
 
@@ -68,12 +81,8 @@ export class WebGPURenderer {
             },
         });
 
-        let mouseX = this.inputManager.x;
-        let mouseY = this.inputManager.y;
-
-        this.mainCam.orbit(mouseX * Math.PI / 180, mouseY * Math.PI / 180, 1);
-
-        let [viewMatrix, projectionMatrix] = this.mainCam.getMatrices();
+        // let [viewMatrix, projectionMatrix] = this.mainCam.update();
+        const viewMatrix = this.mainCam.update(deltaTime, this.inputHandler());
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i]?.mesh;

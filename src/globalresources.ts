@@ -1,3 +1,4 @@
+import { mat4 } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
 
 let device: GPUDevice;
@@ -26,9 +27,16 @@ export function getQueue(): GPUQueue {
     return queue;
 }
 export const primitive: GPUPrimitiveState = {
-    cullMode: "back",
+    cullMode: "none",
     topology: "triangle-list",
 };
+
+export const projectionMatrix = mat4.perspective(
+    (2 * Math.PI) / 5,
+    defaultSettings.resolution.width / defaultSettings.resolution.height,
+    1,
+    100.0
+);
 
 export const depthStencil: GPUDepthStencilState = {
     depthWriteEnabled: true,
