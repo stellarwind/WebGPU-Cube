@@ -1,3 +1,5 @@
+//All copyrights go to https://github.com/webgpu/webgpu-samples/tree/main/sample/cameras
+
 import { Mat4, Vec3, mat4, vec3 } from "wgpu-matrix";
 import Input from "./input";
 

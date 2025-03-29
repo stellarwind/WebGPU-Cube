@@ -29,9 +29,7 @@ export class WebGPURenderer {
         if (canvas) {
             canvas.width = defaultSettings.resolution.width;
             canvas.height = defaultSettings.resolution.height;
-        } else {
-            return;
-        }
+        } else return;
 
         this.inputHandler = createInputHandler(window, canvas);
 
@@ -47,10 +45,7 @@ export class WebGPURenderer {
             format: this.canvasFormat,
         });
 
-        const initialCameraPosition = vec3.create(3, 2, 5);
-        
-
-        this.mainCam = new ArcballCamera({position: initialCameraPosition});
+        this.mainCam = new ArcballCamera({ position: vec3.create(6, 6, 6) });
     }
 
     public renderFrame() {
@@ -81,7 +76,6 @@ export class WebGPURenderer {
             },
         });
 
-        // let [viewMatrix, projectionMatrix] = this.mainCam.update();
         const viewMatrix = this.mainCam.update(deltaTime, this.inputHandler());
 
         for (let i = 0; i < this.entityList.length; i++) {
