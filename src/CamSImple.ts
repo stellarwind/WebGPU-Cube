@@ -30,7 +30,7 @@ export class CameraSimple {
         this.aspect,
         this.near,
         this.far
-    );
+    ); // Actually [-zNear -> -zFar]
 
     private cameraPos: Vec3 = vec3.fromValues(0, 0, 0);
 
@@ -48,15 +48,6 @@ export class CameraSimple {
 
     private viewMatrix = mat4.identity();
 
-    // public orbitQuat(yaw: number, pitch: number, distance: number) {
-    //     const initOffset = vec3.fromValues(0, 0, distance);
-    //     const yawQuat = quat.fromAxisAngle([0, 1, 0], yaw);
-    //     const pitchQuat = quat.fromAxisAngle([1, 0, 0], pitch);
-    //     const combinedQuat = quat.multiply(yawQuat, pitchQuat);
-    //     const transformedOffset = vec3.transformQuat(initOffset, combinedQuat);
-    //     this.cameraPos = vec3.add(this.targetPos, transformedOffset);
-    //     this.viewMatrix = mat4.lookAt(this.cameraPos, this.targetPos, this.up);
-    // }
     public orbit(yaw: number, pitch: number, distance: number) {
 
         const cameraMatrix = mat4.identity();
