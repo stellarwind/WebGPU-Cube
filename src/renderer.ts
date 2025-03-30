@@ -9,7 +9,8 @@ import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { ArcballCamera } from "./camera";
 import { createInputHandler, InputHandler } from "./input";
-import { vec3 } from "wgpu-matrix";
+import { utils, vec3 } from "wgpu-matrix";
+import { CameraSimple } from "./CamSImple";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -22,6 +23,8 @@ export class WebGPURenderer {
     private lastFrameMS: number = Date.now();
 
     private inputHandler!: InputHandler;
+
+    private camSimpleLol!: CameraSimple;
 
     public async init(canvasId: string) {
         await initResources();
@@ -46,6 +49,8 @@ export class WebGPURenderer {
         });
 
         this.mainCam = new ArcballCamera({ position: vec3.create(6, 6, 6) });
+
+        this.camSimpleLol = new CameraSimple();
     }
 
     public renderFrame() {
@@ -76,7 +81,9 @@ export class WebGPURenderer {
             },
         });
 
-        const viewMatrix = this.mainCam.update(deltaTime, this.inputHandler());
+        // const viewMatrix = this.mainCam.update(deltaTime, this.inputHandler());
+        this.camSimpleLol.orbit(utils.degToRad(65), 0, 5);
+        const [projectionMatrix, viewMatrix] = this.camSimpleLol.update(); 
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i]?.mesh;

@@ -1,6 +1,4 @@
-//All copyrights go to https://github.com/webgpu/webgpu-samples/tree/main/sample/cameras
-
-import { Mat4, Vec3, mat4, vec3 } from "wgpu-matrix";
+import { Mat4, Vec3, mat4, utils, vec3 } from "wgpu-matrix";
 import Input from "./input";
 
 export class ArcballCamera {
@@ -85,6 +83,7 @@ export class ArcballCamera {
         const movement = vec3.create();
         vec3.addScaled(movement, this.right, input.analog.x, movement);
         vec3.addScaled(movement, this.up, -input.analog.y, movement);
+
 
         const crossProduct = vec3.cross(movement, this.back);
         const magnitude = vec3.len(crossProduct);
