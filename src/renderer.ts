@@ -3,13 +3,10 @@ import {
     getQueue,
     getDepthTextureView,
     initResources,
-    projectionMatrix,
 } from "./globalresources";
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
-import { ArcballCamera } from "./camera";
-import { createInputHandler, InputHandler } from "./input";
-import { utils, vec3 } from "wgpu-matrix";
+import { utils } from "wgpu-matrix";
 import { CameraSimple } from "./CamSImple";
 
 export class WebGPURenderer {
@@ -18,11 +15,7 @@ export class WebGPURenderer {
 
     private readonly entityList: Array<Entity> = [];
 
-    private mainCam!: ArcballCamera;
-
     private lastFrameMS: number = Date.now();
-
-    private inputHandler!: InputHandler;
 
     private camSimpleLol!: CameraSimple;
 
@@ -33,8 +26,6 @@ export class WebGPURenderer {
             canvas.width = defaultSettings.resolution.width;
             canvas.height = defaultSettings.resolution.height;
         } else return;
-
-        this.inputHandler = createInputHandler(window, canvas);
 
         console.log("GPU Device initialized", getDevice());
 
@@ -47,8 +38,6 @@ export class WebGPURenderer {
             device: getDevice(),
             format: this.canvasFormat,
         });
-
-        this.mainCam = new ArcballCamera({ position: vec3.create(6, 6, 6) });
 
         this.camSimpleLol = new CameraSimple();
     }
@@ -81,9 +70,8 @@ export class WebGPURenderer {
             },
         });
 
-        // const viewMatrix = this.mainCam.update(deltaTime, this.inputHandler());
-        this.camSimpleLol.orbit(utils.degToRad(65), 0, 5);
-        const [projectionMatrix, viewMatrix] = this.camSimpleLol.update(); 
+        this.camSimpleLol.orbit(utils.degToRad(this.lastFrameMS / 100), 0, 5);
+        const [projectionMatrix, viewMatrix] = this.camSimpleLol.update();
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i]?.mesh;
