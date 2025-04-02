@@ -5,6 +5,9 @@ export class Input {
     private deltaX: number = 0;
     private deltaY: number = 0;
 
+    private lastDeltaX: number = 0;
+    private lastDeltaY: number = 0;
+
     public get x() {
         return this.deltaX;
     }
@@ -24,6 +27,8 @@ export class Input {
         this.canvas.addEventListener("mousemove", this.onMouseMove);
         this.canvas.addEventListener("mouseup", this.onMouseUp);
         this.canvas.addEventListener("mouseleave", this.onMouseUp);
+
+        requestAnimationFrame(this.update);
     }
 
     private onMouseDown = () => {
@@ -42,7 +47,24 @@ export class Input {
 
     private onMouseUp = () => {
         document.exitPointerLock();
+        this.deltaX = 0;
+        this.deltaY = 0;
         this.altMod = false;
         this.isDragging = false;
+    };
+
+    private update = () => {
+        if (
+            this.deltaX === this.lastDeltaX &&
+            this.deltaY === this.lastDeltaY
+        ) {
+            this.deltaX = 0;
+            this.deltaY = 0;
+        }
+
+        this.lastDeltaX = this.deltaX;
+        this.lastDeltaY = this.deltaY;
+
+        requestAnimationFrame(this.update);
     };
 }

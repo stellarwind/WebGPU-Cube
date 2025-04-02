@@ -8,6 +8,7 @@ import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { utils } from "wgpu-matrix";
 import { CameraSimple } from "./CamSImple";
+import { Input } from "./input";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -17,7 +18,9 @@ export class WebGPURenderer {
 
     private lastFrameMS: number = Date.now();
 
-    private camSimpleLol!: CameraSimple;
+    private simpleOrbitCam!: CameraSimple;
+
+    private input!: Input;
 
     public async init(canvasId: string) {
         await initResources();
@@ -30,6 +33,7 @@ export class WebGPURenderer {
         console.log("GPU Device initialized", getDevice());
 
         this.canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+        this.input = new Input("viewport");
 
         this.context = canvas.getContext("webgpu");
         if (this.context == null) return;
@@ -39,8 +43,10 @@ export class WebGPURenderer {
             format: this.canvasFormat,
         });
 
-        this.camSimpleLol = new CameraSimple();
+        this.simpleOrbitCam = new CameraSimple();
     }
+
+
 
     public renderFrame() {
         if (this.context == null) return;
@@ -70,9 +76,10 @@ export class WebGPURenderer {
             },
         });
 
-        // this.camSimpleLol.orbitEuler(utils.degToRad(this.lastFrameMS / 100), 0, 5);
-        this.camSimpleLol.orbitQuat(utils.degToRad(this.lastFrameMS / 100), utils.degToRad(-45), 5);
-        const [projectionMatrix, viewMatrix] = this.camSimpleLol.update();
+        // this.simpleOrbitCam.orbitQuat(utils.degToRad(this.lastFrameMS / 100), utils.degToRad(-45), 5);
+       
+        this.simpleOrbitCam.orbitQuat(this.input.x * 30, this.input.y * 30, 6.66);
+        const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i]?.mesh;

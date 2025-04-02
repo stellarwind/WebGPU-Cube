@@ -1,8 +1,9 @@
-import { Mat4, mat4, quat, vec3, Vec3 } from "wgpu-matrix";
+import { Mat4, mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
 
 export class CameraSimple {
-    private yawAngle = 0;
+    private pitchAngle: number = 0;
+    private yawAngle: number = 0;
 
     private fov: number = (60 * Math.PI) / 180;
 
@@ -49,16 +50,20 @@ export class CameraSimple {
     private viewMatrix = mat4.identity();
 
     public orbitEuler(yaw: number, pitch: number, distance: number) {
-
         const cameraMatrix = mat4.identity();
         mat4.rotateY(cameraMatrix, yaw, cameraMatrix);
+        mat4.rotateX(cameraMatrix, pitch, cameraMatrix);
         mat4.translate(cameraMatrix, [0, 0, distance], cameraMatrix);
         this.viewMatrix = mat4.invert(cameraMatrix);
     }
 
     public orbitQuat(yaw: number, pitch: number, distance: number) {
-        const quatYaw = quat.fromAxisAngle([0, 1, 0], yaw);
-        const quatPitch = quat.fromAxisAngle([1, 0, 0], pitch);
+
+        this.yawAngle += utils.degToRad(utils.degToRad(yaw));
+        this.pitchAngle += utils.degToRad(utils.degToRad(pitch));
+
+        const quatYaw = quat.fromAxisAngle([0, 1, 0], this.yawAngle);
+        const quatPitch = quat.fromAxisAngle([1, 0, 0], this.pitchAngle);
         const transformQuat = quat.multiply(quatYaw, quatPitch);
         const cameraMatrix = mat4.fromQuat(transformQuat);
         mat4.translate(cameraMatrix, [0, 0, distance], cameraMatrix);
