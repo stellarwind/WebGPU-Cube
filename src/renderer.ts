@@ -70,7 +70,8 @@ export class WebGPURenderer {
             },
         });
 
-        this.camSimpleLol.orbit(utils.degToRad(this.lastFrameMS / 100), 0, 5);
+        // this.camSimpleLol.orbitEuler(utils.degToRad(this.lastFrameMS / 100), 0, 5);
+        this.camSimpleLol.orbitQuat(utils.degToRad(this.lastFrameMS / 100), utils.degToRad(-45), 5);
         const [projectionMatrix, viewMatrix] = this.camSimpleLol.update();
 
         for (let i = 0; i < this.entityList.length; i++) {

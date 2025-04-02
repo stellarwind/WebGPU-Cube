@@ -48,7 +48,7 @@ export class CameraSimple {
 
     private viewMatrix = mat4.identity();
 
-    public orbit(yaw: number, pitch: number, distance: number) {
+    public orbitEuler(yaw: number, pitch: number, distance: number) {
 
         const cameraMatrix = mat4.identity();
         mat4.rotateY(cameraMatrix, yaw, cameraMatrix);
@@ -56,7 +56,16 @@ export class CameraSimple {
         this.viewMatrix = mat4.invert(cameraMatrix);
     }
 
-    private rotate(vec: Vec3, axis: Vec3, angle: number): Vec3 {
+    public orbitQuat(yaw: number, pitch: number, distance: number) {
+        const quatYaw = quat.fromAxisAngle([0, 1, 0], yaw);
+        const quatPitch = quat.fromAxisAngle([1, 0, 0], pitch);
+        const transformQuat = quat.multiply(quatYaw, quatPitch);
+        const cameraMatrix = mat4.fromQuat(transformQuat);
+        mat4.translate(cameraMatrix, [0, 0, distance], cameraMatrix);
+        this.viewMatrix = mat4.invert(cameraMatrix);
+    }
+
+    private fillRotatation(vec: Vec3, axis: Vec3, angle: number): Vec3 {
         return vec3.transformMat4Upper3x3(vec, mat4.rotation(axis, angle));
     }
 
