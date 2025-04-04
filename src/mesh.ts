@@ -66,7 +66,7 @@ export class Mesh {
             }
             this.colors = defaultColors;
         } else {
-            this.colors = new Float32Array(colors);
+            this.colors = colors;
         }
 
         this.colorBuffer = getDevice().createBuffer({
@@ -80,7 +80,7 @@ export class Mesh {
         if (normals === null) {
             this.normals = new Float32Array(vertexCount * 3).fill(0);
         } else {
-            this.normals = new Float32Array(normals);
+            this.normals = normals;
         }
 
         this.normalBuffer = getDevice().createBuffer({
@@ -105,5 +105,7 @@ export class Mesh {
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
         getQueue().writeBuffer(this.uvBuffer, 0, this.uvs);
+
+        // console.log(this.positions, this.indices, this.uvs);
     }
 }

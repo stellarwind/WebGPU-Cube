@@ -16,9 +16,6 @@ export class GLTFLoader {
         const binResponse = await fetch("./mesh/" + buffer.uri);
         const arrayBuffer = await binResponse.arrayBuffer();
 
-        // console.log(await binResponse.text());
-        // console.log(`byte length ${arrayBuffer.byteLength}`);
-
         const byteOffset = bufferView.byteOffset;
         // const byteLength = bufferView.byteLength;
         const numComponents = positionAccessor.type === "VEC3" ? 3 : 2;
@@ -28,9 +25,9 @@ export class GLTFLoader {
         const vertexData = new Float32Array(
             arrayBuffer,
             byteOffset,
-            bufferView.count * numComponents
+            positionAccessor.count * numComponents
         );
-
+        
         // UVs
         const uvAccessorIndex = primitive.attributes.TEXCOORD_0;
         let uvData: Float32Array | null = null;
