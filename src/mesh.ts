@@ -31,7 +31,7 @@ export class Mesh {
         indices: Uint16Array,
         colors: Float32Array | null = null,
         normals: Float32Array | null = null,
-        uvs: Float32Array | null = null
+        uvs: Float32Array 
     ) {
         this.material = createUnlitMaterial();
 

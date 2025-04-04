@@ -34,7 +34,7 @@ export class GLTFLoader {
         const uvBufferView = gltf.bufferViews[uvAccessor.bufferView];
 
         const uvByteOffset = uvBufferView.byteOffset;
-        const uvNumComponents = uvAccessor.type === "VEC2" ? 2 : 1;
+        const uvNumComponents = 2;
 
         const uvData = new Float32Array(
             arrayBuffer,
