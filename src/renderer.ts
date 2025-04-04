@@ -3,11 +3,11 @@ import {
     getQueue,
     getDepthTextureView,
     initResources,
-} from "./globalresources";
+} from "./global-resources";
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { utils } from "wgpu-matrix";
-import { CameraSimple } from "./CamSImple";
+import { Camera } from "./camera";
 import { Input } from "./input";
 
 export class WebGPURenderer {
@@ -18,7 +18,7 @@ export class WebGPURenderer {
 
     private lastFrameMS: number = Date.now();
 
-    private simpleOrbitCam!: CameraSimple;
+    private simpleOrbitCam!: Camera;
 
     private input!: Input;
 
@@ -43,7 +43,7 @@ export class WebGPURenderer {
             format: this.canvasFormat,
         });
 
-        this.simpleOrbitCam = new CameraSimple();
+        this.simpleOrbitCam = new Camera();
     }
 
 

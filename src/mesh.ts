@@ -1,4 +1,4 @@
-import { getDevice, getQueue } from "./globalresources";
+import { getDevice, getQueue } from "./global-resources";
 import { Material, createUnlitMaterial } from "./material";
 
 export class Mesh {
