@@ -4,7 +4,7 @@ import { GLTFLoader } from "./gltf-mesh-loader";
 
 const DEBUG = false;
 
-const mesh = await GLTFLoader.loadFile("./mesh/test.gltf");
+const mesh = await GLTFLoader.loadFile("./mesh/test2.gltf");
 console.log(mesh);
 
 const renderer = new WebGPURenderer();
