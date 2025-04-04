@@ -31,7 +31,7 @@ export class Mesh {
         indices: Uint16Array,
         colors: Float32Array | null = null,
         normals: Float32Array | null = null,
-        uvs:  Float32Array | null  = null
+        uvs: Float32Array | null = null
     ) {
         this.material = createUnlitMaterial();
 
@@ -98,14 +98,11 @@ export class Mesh {
             this.uvs = uvs;
         }
 
-
         this.uvBuffer = getDevice().createBuffer({
             label: "UVs",
             size: this.uvs.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
         getQueue().writeBuffer(this.uvBuffer, 0, this.uvs);
-
-        // console.log(this.positions, this.indices, this.uvs);
     }
 }

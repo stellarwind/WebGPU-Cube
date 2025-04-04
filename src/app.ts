@@ -11,14 +11,14 @@ const entity = renderer.addEntity();
 entity.addMesh(generateCube());
 entity.translate(-5, 0, -1);
 
-// const entity2 = renderer.addEntity();
-// entity2.addMesh(generateCube());
-// entity.setScale(1, 2, 1);
+const entity2 = renderer.addEntity();
+entity2.addMesh(generateCube());
+entity2.translate(5, 0, 1);
+entity2.setScale(1, 2, 1);
 
 const gltfMesh = await GLTFLoader.loadFile("./mesh/suzanne.gltf");
 const gltfEntity = renderer.addEntity();
 gltfEntity.addMesh(gltfMesh);
-// gltfEntity.setScale(0.1, 0.1, 0.1);
 gltfEntity.setScale(2, 2, 2);
 
 export default () => {

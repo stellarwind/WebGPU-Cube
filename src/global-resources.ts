@@ -6,7 +6,7 @@ let queue: GPUQueue;
 let depthTexture: GPUTexture;
 let depthTextureView: GPUTextureView;
 
-const CULL_MODE: GPUCullMode | undefined = "none";
+const CULL_MODE: GPUCullMode | undefined = "back";
 
 export async function initResources() {
     const adapter: GPUAdapter | null = await navigator.gpu.requestAdapter();

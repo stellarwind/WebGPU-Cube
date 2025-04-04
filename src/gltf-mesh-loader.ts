@@ -27,18 +27,16 @@ export class GLTFLoader {
             byteOffset,
             positionAccessor.count * numComponents
         );
-        
+
         // UVs
         const uvAccessorIndex = primitive.attributes.TEXCOORD_0;
-        let uvData: Float32Array | null = null;
-
         const uvAccessor = gltf.accessors[uvAccessorIndex];
         const uvBufferView = gltf.bufferViews[uvAccessor.bufferView];
 
         const uvByteOffset = uvBufferView.byteOffset;
         const uvNumComponents = uvAccessor.type === "VEC2" ? 2 : 1;
 
-        uvData = new Float32Array(
+        const uvData = new Float32Array(
             arrayBuffer,
             uvByteOffset,
             uvAccessor.count * uvNumComponents
