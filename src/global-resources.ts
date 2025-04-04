@@ -6,6 +6,8 @@ let queue: GPUQueue;
 let depthTexture: GPUTexture;
 let depthTextureView: GPUTextureView;
 
+const CULL_MODE: GPUCullMode | undefined = "none";
+
 export async function initResources() {
     const adapter: GPUAdapter | null = await navigator.gpu.requestAdapter();
 
@@ -27,7 +29,7 @@ export function getQueue(): GPUQueue {
     return queue;
 }
 export const primitive: GPUPrimitiveState = {
-    cullMode: "none",
+    cullMode: CULL_MODE,
     topology: "triangle-list",
 };
 

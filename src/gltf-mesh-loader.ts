@@ -9,10 +9,10 @@ export class GLTFLoader {
         const primitive = mesh.primitives[0];
         const positionAccessorIndex = primitive.attributes.POSITION;
         const positionAccessor = gltf.accessors[positionAccessorIndex];
-        
+
         const bufferView = gltf.bufferViews[positionAccessor.bufferView];
         const buffer = gltf.buffers[bufferView.buffer];
-        
+
         const binResponse = await fetch("./mesh/" + buffer.uri);
         const arrayBuffer = await binResponse.arrayBuffer();
 
@@ -20,19 +20,53 @@ export class GLTFLoader {
         // console.log(`byte length ${arrayBuffer.byteLength}`);
 
         const byteOffset = bufferView.byteOffset;
-        const byteLength = bufferView.byteLength;
+        // const byteLength = bufferView.byteLength;
         const numComponents = positionAccessor.type === "VEC3" ? 3 : 2;
-        
+
         // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#accessor-data-types
-        // 5126 for Float 32
+        // 5126 for Float32
         const vertexData = new Float32Array(
             arrayBuffer,
             byteOffset,
             bufferView.count * numComponents
         );
 
+        // UVs
+        const uvAccessorIndex = primitive.attributes.TEXCOORD_0;
+        let uvData: Float32Array | null = null;
+
+        const uvAccessor = gltf.accessors[uvAccessorIndex];
+        const uvBufferView = gltf.bufferViews[uvAccessor.bufferView];
+
+        const uvByteOffset = uvBufferView.byteOffset;
+        const uvNumComponents = uvAccessor.type === "VEC2" ? 2 : 1;
+
+        uvData = new Float32Array(
+            arrayBuffer,
+            uvByteOffset,
+            uvAccessor.count * uvNumComponents
+        );
+
+        // INDICES
+        const indexPrimitive = primitive.indices;
+
+        const indexAccessor = gltf.accessors[indexPrimitive];
+        const indexBufferView = gltf.bufferViews[indexAccessor.bufferView];
+        const indexByteOffset = indexBufferView.byteOffset;
+
+        // const componentType = indexAccessor.componentType;
+
+        // 5123 ushort, 5125 = uint
+        const indexData = new Uint16Array(
+            arrayBuffer,
+            indexByteOffset,
+            indexAccessor.count
+        );
+
+        const meshData = new Mesh(vertexData, indexData, null, null, uvData);
+
         return new Promise((resolve, reject) => {
-            resolve(gltf);
+            resolve(meshData);
         });
     }
 }

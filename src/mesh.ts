@@ -27,16 +27,17 @@ export class Mesh {
     public readonly passIndex: number = 0;
 
     constructor(
-        verts: Array<number>,
-        indices: Array<number>,
-        colors: Array<number> | null = null,
-        normals: Array<number> | null = null,
-        uvs: Array<number> | null = null
+        verts: Float32Array,
+        indices: Uint16Array,
+        colors: Float32Array | null = null,
+        normals: Float32Array | null = null,
+        uvs:  Float32Array | null  = null
     ) {
         this.material = createUnlitMaterial();
 
         // Positions
-        this.positions = new Float32Array(verts);
+        // this.positions = new Float32Array(verts);
+        this.positions = verts;
         this.positionBuffer = getDevice().createBuffer({
             label: "Positions",
             size: this.positions.byteLength,
@@ -44,17 +45,18 @@ export class Mesh {
         });
         getQueue().writeBuffer(this.positionBuffer, 0, this.positions);
 
-        this.indices = new Uint16Array(indices);
+        // this.indices = new Uint16Array(indices);
 
+        this.indices = indices;
         this.indexBuffer = getDevice().createBuffer({
             label: "Indices",
-            size: this.indices.byteLength,
+            size: indices.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
         });
-        getQueue().writeBuffer(this.indexBuffer, 0, this.indices);
+        getQueue().writeBuffer(this.indexBuffer, 0, indices);
 
         // Vertices
-        let vertexCount = this.positions.length / 3.0;
+        let vertexCount = verts.length / 3.0;
         if (colors === null) {
             const defaultColors = new Float32Array(vertexCount * 3);
             for (let i = 0; i < vertexCount; i++) {
@@ -93,8 +95,9 @@ export class Mesh {
         if (uvs === null) {
             this.uvs = new Float32Array(vertexCount * 2).fill(0);
         } else {
-            this.uvs = new Float32Array(uvs);
+            this.uvs = uvs;
         }
+
 
         this.uvBuffer = getDevice().createBuffer({
             label: "UVs",
