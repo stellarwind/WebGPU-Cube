@@ -6,7 +6,7 @@ export class GLTFLoader {
 
         if (!file.ok)
             return Promise.reject(
-                new Error(`Failed to load file:${file.statusText}`)
+                console.error(`Failed to load file:${file.statusText}`)
             );
 
         const gltf = await file.json();
