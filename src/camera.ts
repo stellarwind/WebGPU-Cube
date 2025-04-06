@@ -1,4 +1,4 @@
-import { Mat4, mat4, Quat, quat, utils, vec3, Vec3 } from "wgpu-matrix";
+import { Mat4, mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
 
 export class Camera {
@@ -57,9 +57,6 @@ export class Camera {
         this.viewMatrix = mat4.invert(cameraMatrix);
     }
 
-    private prevTransformQuat: Quat = quat.identity();
-    
-    // vec3.transformMat4Upper3x3(vec, mat4.rotation(axis, angle));
     public orbitQuat(yaw: number, pitch: number, distance: number) {
         this.yawAngle += utils.degToRad(utils.degToRad(yaw));
         this.pitchAngle += utils.degToRad(utils.degToRad(pitch));

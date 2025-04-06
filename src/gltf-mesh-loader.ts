@@ -66,7 +66,7 @@ export class GLTFLoader {
 
         const meshData = new Mesh(vertexData, indexData, null, null, uvData);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             resolve(meshData);
         });
     }

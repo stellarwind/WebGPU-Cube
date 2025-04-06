@@ -4,7 +4,6 @@ import { defaultSettings } from "./settings";
 let device: GPUDevice;
 let queue: GPUQueue;
 let depthTexture: GPUTexture;
-let depthTextureView: GPUTextureView;
 
 const CULL_MODE: GPUCullMode | undefined = "back";
 
@@ -57,8 +56,6 @@ function initDepthTexture() {
         format: "depth24plus-stencil8",
         usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     });
-
-    depthTextureView = depthTexture.createView();
 }
 
 export function getDepthTextureView(): GPUTextureView {

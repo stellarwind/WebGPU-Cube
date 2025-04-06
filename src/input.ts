@@ -1,7 +1,6 @@
 export class Input {
     private canvas: HTMLCanvasElement | null = null;
-    private isDragging: boolean = false;
-    private altMod: boolean = false;
+
     private deltaX: number = 0;
     private deltaY: number = 0;
 
@@ -33,12 +32,10 @@ export class Input {
 
     private onMouseDown = () => {
         this.canvas?.requestPointerLock();
-        this.isDragging = true;
     };
 
     private onMouseMove = (event: MouseEvent) => {
         if (document.pointerLockElement === this.canvas) {
-            if (event.altKey) this.altMod = true;
 
             this.deltaX = event.movementX;
             this.deltaY = event.movementY;
@@ -49,8 +46,6 @@ export class Input {
         document.exitPointerLock();
         this.deltaX = 0;
         this.deltaY = 0;
-        this.altMod = false;
-        this.isDragging = false;
     };
 
     private update = () => {

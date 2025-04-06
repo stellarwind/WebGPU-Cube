@@ -6,7 +6,6 @@ import {
 } from "./global-resources";
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
-import { utils } from "wgpu-matrix";
 import { Camera } from "./camera";
 import { Input } from "./input";
 
