@@ -25,9 +25,17 @@ const gltfEntity = renderer.addEntity();
 const gltfEntityMesh = gltfEntity.addMesh(gltfMesh);
 gltfEntityMesh.material = await createUnlitMaterial();
 gltfEntityMesh.material.setTexture("albedo", "./muscle.jpg");
-gltfEntity.setScale(1.25, 1.25, 1.25);
+gltfEntity.setScale(1, 1, 1);
 gltfEntity.rotate(0, 45, 0);
-gltfEntity.translate(0, 1.5, 0);
+gltfEntity.translate(-3, 2.5, 0);
+
+const gltfMesh2 = await GLTFLoader.loadFile("./mesh/octo.gltf");
+const gltfEntity2 = renderer.addEntity();
+const gltfEntityMesh2 = gltfEntity2.addMesh(gltfMesh2);
+gltfEntityMesh2.material = await createUnlitMaterial();
+gltfEntityMesh2.material.setTexture("albedo", "./mesh/octo.png");
+gltfEntity2.setScale(3, 3, 3);
+gltfEntity2.translate(0, 0, 0);
 
 export default () => {
     let lastFrameTime = performance.now();
