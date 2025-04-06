@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/c31be4d5-8c99-4093-9ecc-3b9bafac1e0c)
+![image](https://github.com/user-attachments/assets/e21de592-e3c2-49f7-b23e-2e863415d764)
 
 # TypeScript + WebGPU + Vite
 
