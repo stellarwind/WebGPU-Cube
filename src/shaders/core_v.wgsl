@@ -16,7 +16,6 @@ fn main_vert(@location(0) inPos: vec4f,
     var vsOut: VSOut;
 
     var col: vec4f;
-    col = 0.5 * (inPos + vec4(1.0, 1.0, 1.0, 1.0));
     vsOut.uv = inUV;
     vsOut.Position =  uniforms.mvpMatrix * inPos;
     vsOut.color = col.xyz;
