@@ -11,7 +11,7 @@ export class GLTFLoader {
 
         const gltf = await file.json();
 
-        const mesh = gltf.meshes[0];
+        const mesh = gltf.meshes[0]; //TODO read all meshes
         const primitive = mesh.primitives[0];
         const positionAccessorIndex = primitive.attributes.POSITION;
         const positionAccessor = gltf.accessors[positionAccessorIndex];

@@ -1,5 +1,5 @@
 import { getDevice, getQueue } from "./global-resources";
-import { Material, createUnlitMaterial } from "./material";
+import { Material } from "./material";
 
 export class Mesh {
     public readonly positionBuffer!: GPUBuffer;

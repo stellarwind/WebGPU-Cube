@@ -133,15 +133,15 @@ export class Material {
             size: [img.width, img.height],
             format: "rgba8unorm",
             usage:
-            GPUTextureUsage.TEXTURE_BINDING |
-            GPUTextureUsage.COPY_DST |
-            GPUTextureUsage.RENDER_ATTACHMENT,
+                GPUTextureUsage.TEXTURE_BINDING |
+                GPUTextureUsage.COPY_DST |
+                GPUTextureUsage.RENDER_ATTACHMENT,
         });
 
         this.properties.textures[propertyName] = {
             image: img,
             textureHandle: texture,
-            uri: value
+            uri: value,
         };
 
         this.generateMaterialBindGroup();
@@ -166,9 +166,9 @@ export class Material {
     }
 
     async generateMaterialBindGroup() {
-        Object.entries(this.properties.textures).forEach(([key, texturedef]) => {
+        Object.entries(this.properties.textures).forEach(([_, texturedef]) => {
             const texture = texturedef;
-            
+
             getDevice().queue.copyExternalImageToTexture(
                 { source: texture.image },
                 { texture: texture.textureHandle },
@@ -180,7 +180,7 @@ export class Material {
                 minFilter: "linear",
             });
             this.materialBindGroup = getDevice().createBindGroup({
-                layout: this.pipeline.getBindGroupLayout(1),
+                layout: this.pipeline.getBindGroupLayout(1), //TODO increase layout index for each texture
                 entries: [
                     {
                         binding: 0,
@@ -192,7 +192,7 @@ export class Material {
                     },
                 ],
             });
-        })
+        });
     }
 
     generatePipeline() {

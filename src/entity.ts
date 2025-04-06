@@ -1,12 +1,35 @@
 import { Mesh } from "./mesh";
-import { mat4, Mat4} from "wgpu-matrix";
+import { mat4, Mat4, vec3 } from "wgpu-matrix";
 
 export class Entity {
-    
-    private position_ = [0, 0, 0];
-    private rotation_ = [0, 0, 0];
-    private scale_ = [1, 1, 1];
- 
+    private position_ = vec3.fromValues(0, 0, 0);
+    private rotation_ = vec3.fromValues(0, 0, 0);
+    private scale_ = vec3.fromValues(1, 1, 1);
+
+    public setScale(x = 1, y = 1, z = 1) {
+        if (x * y * z === 0) return;
+        this.scale_ = vec3.fromValues(x, y, z);
+    }
+
+    public translate(x = 0, y = 0, z = 0) {
+        this.position_ = vec3.fromValues(x, y, z);
+    }
+
+    public rotate(x = 0, y = 0, z = 0) {
+        this.rotation_ = vec3.fromValues(x, y, z);
+    }
+
+    public get scale() {
+        return [...this.scale_];
+    }
+
+    public get position() {
+        return [...this.position_];
+    }
+
+    public get rotation() {
+        return [...this.rotation_];
+    }
     private mvpMatrix_: Mat4 = mat4.create();
 
     public get mvpMatrix() {
@@ -18,15 +41,16 @@ export class Entity {
     private mesh_: Mesh | null = null;
 
     public get mesh(): Mesh | null {
-        return this.renderable? this.mesh_: null;
+        return this.renderable ? this.mesh_ : null;
     }
-    
+
     public get renderable(): boolean {
         return this.mesh_ !== null && this.mesh_.indexCount > 0;
     }
 
-    public addMesh(mesh: Mesh) {
+    public addMesh(mesh: Mesh): Mesh {
         this.mesh_ = mesh;
+        return this.mesh_;
     }
 
     public calculateMVPMatrix(viewMatrix: Mat4, projectionMatrix: Mat4): Mat4 {
@@ -45,30 +69,4 @@ export class Entity {
 
         return this.mvpMatrix_;
     }
-
-    public setScale (x = 1, y = 1, z = 1) {
-        if (x * y * z === 0) return;
-        this.scale_ = [x, y, z];
-    }
-
-    public translate (x = 0, y = 0, z = 0) {
-        this.position_ = [x, y, z];
-    }
-
-    public rotate (x = 0, y = 0, z = 0) {
-        this.rotation_ = [x, y, z];
-    }
-
-    public get scale() {
-        return [...this.scale_]
-    }
-
-    public get position() {
-        return [...this.position_]
-    }
-
-    public get rotation() {
-        return [...this.rotation_]
-    }
-
 }
