@@ -3,6 +3,12 @@ import { Mesh } from "./mesh";
 export class GLTFLoader {
     public static async loadFile(fileName: string): Promise<Mesh> {
         const file = await fetch(fileName);
+
+        if (!file.ok)
+            return Promise.reject(
+                new Error(`Failed to load file:${file.statusText}`)
+            );
+
         const gltf = await file.json();
 
         const mesh = gltf.meshes[0];

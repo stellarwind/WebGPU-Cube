@@ -5,8 +5,14 @@ import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
 
 interface ShaderProperties {
-    textures: Record<string, GPUTexture>;
+    textures: Record<string, TextureDef>;
     scalars: Record<string, number | Vec2 | Vec3 | Vec4>;
+}
+
+interface TextureDef {
+    image: ImageBitmap;
+    textureHandle: GPUTexture;
+    uri: String;
 }
 
 export class Material {
@@ -121,7 +127,27 @@ export class Material {
         return [vertex, fragment];
     };
 
-    generateCommonBindGroup = async () => {
+    async setTexture(propertyName: string, value: string) {
+        const img = await loadImageBitmap(value);
+        const texture = getDevice().createTexture({
+            size: [img.width, img.height],
+            format: "rgba8unorm",
+            usage:
+            GPUTextureUsage.TEXTURE_BINDING |
+            GPUTextureUsage.COPY_DST |
+            GPUTextureUsage.RENDER_ATTACHMENT,
+        });
+
+        this.properties.textures[propertyName] = {
+            image: img,
+            textureHandle: texture,
+            uri: value
+        };
+
+        this.generateMaterialBindGroup();
+    }
+
+    async generateCommonBindGroup() {
         this.MVPUniformBuffer = getDevice().createBuffer({
             size: 4 * 16, // 4x4 MVP * 4 bytes float
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -137,47 +163,39 @@ export class Material {
                 },
             ],
         });
-    };
+    }
 
-    generateMaterialBindGroup = async () => {
-        // TODO remove default texture
-        const img = await loadImageBitmap("uv1.png");
-        const texture = getDevice().createTexture({
-            size: [img.width, img.height],
-            format: "rgba8unorm",
-            usage:
-                GPUTextureUsage.TEXTURE_BINDING |
-                GPUTextureUsage.COPY_DST |
-                GPUTextureUsage.RENDER_ATTACHMENT,
-        });
-        getDevice().queue.copyExternalImageToTexture(
-            { source: img },
-            { texture: texture },
-            [img.width, img.height]
-        );
-        const texView = texture.createView();
-        const sampler = getDevice().createSampler({
-            magFilter: "linear",
-            minFilter: "linear",
-        });
-        img.close();
+    async generateMaterialBindGroup() {
+        Object.entries(this.properties.textures).forEach(([key, texturedef]) => {
+            const texture = texturedef;
+            
+            getDevice().queue.copyExternalImageToTexture(
+                { source: texture.image },
+                { texture: texture.textureHandle },
+                [texture.image.width, texture.image.height]
+            );
+            const texView = texture.textureHandle.createView();
+            const sampler = getDevice().createSampler({
+                magFilter: "linear",
+                minFilter: "linear",
+            });
+            this.materialBindGroup = getDevice().createBindGroup({
+                layout: this.pipeline.getBindGroupLayout(1),
+                entries: [
+                    {
+                        binding: 0,
+                        resource: sampler,
+                    },
+                    {
+                        binding: 1,
+                        resource: texView,
+                    },
+                ],
+            });
+        })
+    }
 
-        this.materialBindGroup = getDevice().createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(1),
-            entries: [
-                {
-                    binding: 0,
-                    resource: sampler,
-                },
-                {
-                    binding: 1,
-                    resource: texView,
-                },
-            ],
-        });
-    };
-
-    generatePipeline = () => {
+    generatePipeline() {
         const [vertex, fragment] = this.generateStates();
 
         const pipelineDesc: GPURenderPipelineDescriptor = {
@@ -189,9 +207,9 @@ export class Material {
         };
 
         this.pipeline = getDevice().createRenderPipeline(pipelineDesc);
-    };
+    }
 
-    compileShader = () => {
+    compileShader() {
         const bindGroupHeader0 = `@binding(0) @group(0) var<uniform> uniforms : Uniforms;`;
 
         //TODO this one should be generated
@@ -218,17 +236,26 @@ export class Material {
         } catch (error) {
             console.error(error);
         }
-    };
+    }
 }
 
-export const createUnlitMaterial = (): Material => {
+export const createUnlitMaterial = async (): Promise<Material> => {
+    const img = await loadImageBitmap("uv1.png");
+    const texture = getDevice().createTexture({
+        size: [img.width, img.height],
+        format: "rgba8unorm",
+        usage:
+            GPUTextureUsage.TEXTURE_BINDING |
+            GPUTextureUsage.COPY_DST |
+            GPUTextureUsage.RENDER_ATTACHMENT,
+    });
     const unlitProperties: ShaderProperties = {
         textures: {
-            albedo: getDevice().createTexture({
-                size: [512, 512, 1],
-                format: "rgba8unorm",
-                usage: GPUTextureUsage.TEXTURE_BINDING,
-            }),
+            albedo: {
+                image: img,
+                uri: "uv1.png",
+                textureHandle: texture,
+            },
         },
         scalars: {
             baseColor: vec3.fromValues(1, 1, 1),

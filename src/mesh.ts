@@ -14,10 +14,14 @@ export class Mesh {
     private normals!: Float32Array;
     private uvs!: Float32Array;
 
-    private material!: Material;
+    private material_!: Material;
 
-    public get getMaterial() {
-        return this.material;
+    public get material() {
+        return this.material_;
+    }
+
+    public set  material(value) {
+        this.material_ = value;
     }
 
     public get indexCount(): number {
@@ -33,10 +37,7 @@ export class Mesh {
         normals: Float32Array | null = null,
         uvs: Float32Array 
     ) {
-        this.material = createUnlitMaterial();
-
         // Positions
-        // this.positions = new Float32Array(verts);
         this.positions = verts;
         this.positionBuffer = getDevice().createBuffer({
             label: "Positions",
@@ -45,8 +46,7 @@ export class Mesh {
         });
         getQueue().writeBuffer(this.positionBuffer, 0, this.positions);
 
-        // this.indices = new Uint16Array(indices);
-
+        // Indices
         this.indices = indices;
         this.indexBuffer = getDevice().createBuffer({
             label: "Indices",

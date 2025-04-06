@@ -83,7 +83,7 @@ export class WebGPURenderer {
 
         for (let i = 0; i < this.entityList.length; i++) {
             const mesh = this.entityList[i]?.mesh;
-            const material = mesh?.getMaterial;
+            const material = mesh?.material;
             const pipe = material?.getPipeline;
 
             if (!mesh || !pipe || !material.ready) continue;
@@ -94,15 +94,15 @@ export class WebGPURenderer {
 
             const mvpArray = new Float32Array(this.entityList[i].mvpMatrix);
             getQueue().writeBuffer(
-                mesh.getMaterial.getMVPUniformBuffer,
+                mesh.material.getMVPUniformBuffer,
                 0,
                 mvpArray.buffer,
                 mvpArray.byteOffset,
                 mvpArray.byteLength
             );
 
-            const commondBindGrp = mesh.getMaterial.getCommonBindGroup;
-            const matBindGrp = mesh.getMaterial.getMaterialBindGroup;
+            const commondBindGrp = mesh.material.getCommonBindGroup;
+            const matBindGrp = mesh.material.getMaterialBindGroup;
 
             pass.setBindGroup(0, commondBindGrp);
             pass.setBindGroup(1, matBindGrp);
