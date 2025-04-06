@@ -145,6 +145,7 @@ export class Material {
         };
 
         this.generateMaterialBindGroup();
+        img.close();
     }
 
     async generateCommonBindGroup() {
@@ -261,6 +262,7 @@ export const createUnlitMaterial = async (): Promise<Material> => {
             baseColor: vec3.fromValues(1, 1, 1),
         },
     };
+    img.close();
     return new Material(
         unlitProperties,
         vertexShaderCode,
