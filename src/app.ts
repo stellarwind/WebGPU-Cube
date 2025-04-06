@@ -14,18 +14,19 @@ const run = async () => {
     entitymesh.material = await createUnlitMaterial();
     entitymesh.material.setTexture("albedo", "./test.jpg");
     entity.translate(-3.3, 0, -1);
+    entity.rotate(90, 0, 0);
 
     const entity2 = renderer.addEntity();
     const entity2mesh = entity2.addMesh(generateCube());
     entity2mesh.material = await createUnlitMaterial();
     entity2mesh.material.setTexture("albedo", "./test.jpg");
     entity2.translate(3.5, 0, 1);
+    entity2.rotate(90, 0, 0);
 
     const gltfMesh = await GLTFLoader.loadFile("./mesh/suzanne.gltf");
     const gltfEntity = renderer.addEntity();
     const gltfEntityMesh = gltfEntity.addMesh(gltfMesh);
     gltfEntityMesh.material = await createUnlitMaterial();
-    gltfEntityMesh.material.setTexture("albedo", "./muscle.jpg");
     gltfEntity.setScale(1, 1, 1);
     gltfEntity.rotate(0, 45, 0);
     gltfEntity.translate(-3, 2.5, 0);
