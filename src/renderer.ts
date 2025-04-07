@@ -75,7 +75,7 @@ export class WebGPURenderer {
             },
         });
 
-        this.simpleOrbitCam.orbitQuat(this.input.x * 150 * deltaTime, this.input.y * 150 * deltaTime, 6.66);
+        this.simpleOrbitCam.orbitQuat(this.input.x * 150 * deltaTime, this.input.y * 150 * deltaTime, this.input.scrollDelta );
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
         for (let i = 0; i < this.entityList.length; i++) {

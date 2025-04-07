@@ -15,6 +15,13 @@ export class Input {
         return this.deltaY;
     }
 
+    private lastScrollDelta: number = 0;
+    private currentScrollDelta: number = 0;
+
+    public get scrollDelta() {
+        return this.currentScrollDelta;
+    }
+
     constructor(canvasId: string) {
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         if (!this.canvas) {
@@ -26,9 +33,16 @@ export class Input {
         this.canvas.addEventListener("mousemove", this.onMouseMove);
         this.canvas.addEventListener("mouseup", this.onMouseUp);
         this.canvas.addEventListener("mouseleave", this.onMouseUp);
+        this.canvas.addEventListener("wheel", this.onMouseWheel, {
+            passive: true,
+        });
 
         requestAnimationFrame(this.update);
     }
+
+    private onMouseWheel = (event: WheelEvent) => {
+        this.currentScrollDelta = event.deltaY;
+    };
 
     private onMouseDown = () => {
         this.canvas?.requestPointerLock();
@@ -36,7 +50,6 @@ export class Input {
 
     private onMouseMove = (event: MouseEvent) => {
         if (document.pointerLockElement === this.canvas) {
-
             this.deltaX = event.movementX;
             this.deltaY = event.movementY;
         }
@@ -59,6 +72,12 @@ export class Input {
 
         this.lastDeltaX = this.deltaX;
         this.lastDeltaY = this.deltaY;
+
+        if (this.lastScrollDelta === this.currentScrollDelta) {
+            this.currentScrollDelta = 0;
+        }
+
+        this.lastScrollDelta = this.currentScrollDelta;
 
         requestAnimationFrame(this.update);
     };

@@ -1,9 +1,15 @@
 import { Mat4, mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
+import { clamp } from "./util";
 
 export class Camera {
     private pitchAngle: number = 0;
     private yawAngle: number = 0;
+
+    private distance: number = 6;
+    private maxDist: number = 100;
+    private minDist: number = 0.5;
+    private zoomSpeed: number = 0.01;
 
     private fov: number = (60 * Math.PI) / 180;
 
@@ -58,6 +64,10 @@ export class Camera {
     }
 
     public orbitQuat(yaw: number, pitch: number, distance: number) {
+
+        this.distance += distance * this.zoomSpeed;
+        this.distance = clamp(this.distance, this.minDist, this.maxDist);
+
         this.yawAngle += utils.degToRad(utils.degToRad(yaw));
         this.pitchAngle += utils.degToRad(utils.degToRad(pitch));
 
@@ -66,7 +76,7 @@ export class Camera {
         const transformQuat = quat.multiply(quatYaw, quatPitch);
 
         const cameraMatrix = mat4.fromQuat(transformQuat);
-        mat4.translate(cameraMatrix, [0, 0, distance], cameraMatrix);
+        mat4.translate(cameraMatrix, [0, 0, this.distance], cameraMatrix);
         this.viewMatrix = mat4.invert(cameraMatrix);
     }
 
