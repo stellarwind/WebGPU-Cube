@@ -8,12 +8,14 @@ import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
 import { Input } from "./input";
+import { MeshEntity } from "./mesh-entity";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
     private canvasFormat!: GPUTextureFormat;
 
     private readonly entityList: Array<Entity> = [];
+    private readonly meshEntityList: Array<MeshEntity> = [];
 
     private lastFrameMS: number = Date.now();
 
@@ -78,8 +80,10 @@ export class WebGPURenderer {
         this.simpleOrbitCam.orbitQuat(this.input.x * 150 * deltaTime, this.input.y * 150 * deltaTime, this.input.scrollDelta );
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
-        for (let i = 0; i < this.entityList.length; i++) {
-            const mesh = this.entityList[i]?.mesh;
+        // Render meshes
+        for (let i = 0; i < this.meshEntityList.length; i++) {
+            const meshEntity = this.meshEntityList[i];
+            const mesh = meshEntity.mesh;
             const material = mesh?.material;
             const pipe = material?.getPipeline;
 
@@ -87,9 +91,9 @@ export class WebGPURenderer {
 
             pass.setPipeline(pipe);
 
-            this.entityList[i].calculateMVPMatrix(viewMatrix, projectionMatrix);
+            meshEntity.transform.calculateMVPMatrix(viewMatrix, projectionMatrix);
 
-            const mvpArray = new Float32Array(this.entityList[i].mvpMatrix);
+            const mvpArray = new Float32Array(meshEntity.transform.mvpMatrix);
             getQueue().writeBuffer(
                 mesh.material.getMVPUniformBuffer,
                 0,
@@ -119,9 +123,11 @@ export class WebGPURenderer {
         getQueue().submit([commandBuffer]);
     }
 
-    public addEntity(): Entity {
-        const entity = new Entity();
+    public addEntity(entity: Entity){
+        if (entity instanceof MeshEntity) {
+            this.meshEntityList.push(entity)
+
+        } else
         this.entityList.push(entity);
-        return entity;
     }
 }
