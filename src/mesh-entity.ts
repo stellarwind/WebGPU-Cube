@@ -13,8 +13,8 @@ export class MeshEntity extends Entity {
         return this.mesh_;
     }
 
-    constructor( mesh: Mesh, name: string = "New Mesh") {
+    constructor( mesh: Mesh | null = null, name: string = "New Mesh") {
         super(name);
-        this.setMesh(mesh);
+        this.setMesh(mesh!);
     }
 }

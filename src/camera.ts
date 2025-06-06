@@ -1,8 +1,9 @@
 import { Mat4, mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
 import { defaultSettings } from "./settings";
 import { clamp } from "./util";
+import { Entity } from "./entity";
 
-export class Camera {
+export class Camera extends Entity {
     private pitchAngle: number = 0;
     private yawAngle: number = 0;
 
