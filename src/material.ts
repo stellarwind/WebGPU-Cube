@@ -45,6 +45,12 @@ export class Material {
         return this.materialBindGroup;
     }
 
+    private lightsBindGroup!: GPUBindGroup;
+
+    get getLightsBindGroup() {
+        return this.lightsBindGroup;
+    }
+
     get ready() {
         return (
             this.commonBindGroup != undefined &&
@@ -194,6 +200,24 @@ export class Material {
                 ],
             });
         });
+    }
+
+    async generateLightsBindGroup() {
+        const lightsBuffer = getDevice().createBuffer({
+            size:  16 * 2, //vec3 + float32 + vec3 + pad 
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+
+        this.lightsBindGroup = getDevice().createBindGroup({
+            layout: this.pipeline.getBindGroupLayout(2),
+            entries: [
+                {
+                    binding: 0,
+                    resource: { buffer: lightsBuffer },
+                },
+            ],
+        });
+
     }
 
     generatePipeline() {

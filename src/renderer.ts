@@ -9,6 +9,7 @@ import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
 import { Input } from "./input";
 import { MeshEntity } from "./mesh-entity";
+import { LightEntity } from "./light";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -16,6 +17,8 @@ export class WebGPURenderer {
 
     private readonly entityList: Array<Entity> = [];
     private readonly meshEntityList: Array<MeshEntity> = [];
+
+    private readonly lightEntityList: Array<LightEntity> = [];
 
     private lastFrameMS: number = Date.now();
 
@@ -47,8 +50,6 @@ export class WebGPURenderer {
         this.simpleOrbitCam = new Camera();
     }
 
-
-
     public renderFrame() {
         if (this.context == null) return;
 
@@ -77,7 +78,7 @@ export class WebGPURenderer {
             },
         });
 
-        this.simpleOrbitCam.orbitQuat(this.input.x * 150 * deltaTime, this.input.y * 150 * deltaTime, this.input.scrollDelta );
+        this.simpleOrbitCam.orbitQuat( this.input.x * 150 * deltaTime, this.input.y * 150 * deltaTime, this.input.scrollDelta);
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
         // Render meshes
@@ -91,7 +92,7 @@ export class WebGPURenderer {
 
             pass.setPipeline(pipe);
 
-            meshEntity.transform.calculateMVPMatrix(viewMatrix, projectionMatrix);
+            meshEntity.transform.calculateMVPMatrix( viewMatrix, projectionMatrix);
 
             const mvpArray = new Float32Array(meshEntity.transform.mvpMatrix);
             getQueue().writeBuffer(
@@ -123,11 +124,11 @@ export class WebGPURenderer {
         getQueue().submit([commandBuffer]);
     }
 
-    public addEntity(entity: Entity){
+    public addEntity(entity: Entity) {
         if (entity instanceof MeshEntity) {
-            this.meshEntityList.push(entity)
-
-        } else
-        this.entityList.push(entity);
+            this.meshEntityList.push(entity);
+        } else if (entity instanceof LightEntity) {
+            this.lightEntityList.push(entity);
+        } else this.entityList.push(entity);
     }
 }

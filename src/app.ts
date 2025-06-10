@@ -3,6 +3,8 @@ import { generateCube } from "./primitives";
 import { GLTFLoader } from "./gltf-mesh-loader";
 import { createUnlitMaterial } from "./material";
 import { MeshEntity } from "./mesh-entity";
+import { LightEntity, LightType } from "./light";
+import { vec3 } from "wgpu-matrix";
 
 const DEBUG = false;
 const renderer = new WebGPURenderer();
@@ -41,6 +43,13 @@ const run = async () => {
     gltfEntity2.transform.setScale(3, 3, 3);
     gltfEntity2.transform.translate(0, 0, 0);
     renderer.addEntity(gltfEntity2);
+
+    const dirLight = new LightEntity({
+        type: LightType.Directional,
+        intensity: 1.0,
+        color: vec3.create(1, 1 ,1)
+    });
+    renderer.addEntity(dirLight);
 };
 
 export default () => {

@@ -1,4 +1,4 @@
-import { mat4, Mat4, utils, vec3 } from "wgpu-matrix";
+import { mat4, Mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
 
 export class Transform {
     private position_ = vec3.fromValues(0, 0, 0);
@@ -37,6 +37,21 @@ export class Transform {
     public get rotation() {
         return [...this.rotation_];
     }
+
+    public get forward(): Vec3 {
+        const localf = vec3.create(0, 0, -1);
+        const rotQuat = quat.fromEuler(
+            utils.degToRad(this.rotation_[0]),
+            utils.degToRad(this.rotation_[1]),
+            utils.degToRad(this.rotation_[2]),
+            "xyz"
+        );
+        const mat = mat4.fromQuat(rotQuat);
+        vec3.transformMat4(localf, mat, localf);
+
+        return vec3.normalize(localf);
+    }
+
     private mvpMatrix_: Mat4 = mat4.create();
 
     public get mvpMatrix() {
@@ -61,7 +76,6 @@ export class Transform {
         mat4.multiply(projectionMatrix, viewMatrix, this.mvpMatrix_);
         mat4.multiply(this.mvpMatrix_, this.modelMatrix, this.mvpMatrix_);
 
-        // this.dirty = false;
         return this.mvpMatrix_;
     }
 }
