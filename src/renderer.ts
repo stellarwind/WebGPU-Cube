@@ -9,7 +9,8 @@ import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
 import { Input } from "./input";
 import { MeshEntity } from "./mesh-entity";
-import { LightEntity } from "./light";
+import { LightEntity, LightType } from "./light";
+import { vec3 } from "wgpu-matrix";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -19,6 +20,17 @@ export class WebGPURenderer {
     private readonly meshEntityList: Array<MeshEntity> = [];
 
     private readonly lightEntityList: Array<LightEntity> = [];
+
+    private get dirLight() {
+        return (
+            this.lightEntityList.find((e) => e.type === LightType.Directional) ??
+            new LightEntity({
+                type: LightType.Directional,
+                intensity: 0.0,
+                color: vec3.create(0, 0, 0),
+            })
+        );
+    }
 
     private lastFrameMS: number = Date.now();
 
@@ -78,21 +90,40 @@ export class WebGPURenderer {
             },
         });
 
-        this.simpleOrbitCam.orbitQuat( this.input.x * 150 * deltaTime, this.input.y * 150 * deltaTime, this.input.scrollDelta);
+        this.simpleOrbitCam.orbitQuat(
+            this.input.x * 150 * deltaTime,
+            this.input.y * 150 * deltaTime,
+            this.input.scrollDelta
+        );
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
+        // Write light buffers
+        const dirLight = this.dirLight;
+            
+        getQueue().writeBuffer(
+            LightEntity.dirLightBuffer,
+            0,
+            dirLight.shaderData,
+            // dirLight.shaderData.byteOffset,
+            // dirLight.shaderData.byteLength
+        );
+        
         // Render meshes
         for (let i = 0; i < this.meshEntityList.length; i++) {
             const meshEntity = this.meshEntityList[i];
             const mesh = meshEntity.mesh;
             const material = mesh?.material;
             const pipe = material?.getPipeline;
-
+            
             if (!mesh || !pipe || !material.ready) continue;
-
+            
             pass.setPipeline(pipe);
+            
 
-            meshEntity.transform.calculateMVPMatrix( viewMatrix, projectionMatrix);
+            meshEntity.transform.calculateMVPMatrix(
+                viewMatrix,
+                projectionMatrix
+            );
 
             const mvpArray = new Float32Array(meshEntity.transform.mvpMatrix);
             getQueue().writeBuffer(
@@ -105,9 +136,11 @@ export class WebGPURenderer {
 
             const commondBindGrp = mesh.material.getCommonBindGroup;
             const matBindGrp = mesh.material.getMaterialBindGroup;
+            const lightBindGrp = mesh.material.getLightsBindGroup;
 
             pass.setBindGroup(0, commondBindGrp);
             pass.setBindGroup(1, matBindGrp);
+            pass.setBindGroup(2, lightBindGrp);
 
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);

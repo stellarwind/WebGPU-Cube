@@ -1,6 +1,3 @@
-struct Uniforms {
-    mvpMatrix: mat4x4f
-}
 
 struct VSOut {
     @builtin(position) Position: vec4f,

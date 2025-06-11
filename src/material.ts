@@ -3,6 +3,7 @@ import unlitFragmentShaderCode from "./shaders/core_f.wgsl?raw";
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
+import { LightEntity } from "./light";
 
 interface ShaderProperties {
     textures: Record<string, TextureDef>;
@@ -69,6 +70,7 @@ export class Material {
 
         this.generateCommonBindGroup();
         this.generateMaterialBindGroup();
+        this.generateLightsBindGroup();
     }
 
     generateStates = (): [GPUVertexState, GPUFragmentState] => {
@@ -203,28 +205,61 @@ export class Material {
     }
 
     async generateLightsBindGroup() {
-        const lightsBuffer = getDevice().createBuffer({
-            size:  16 * 2, //vec3 + float32 + vec3 + pad 
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-
         this.lightsBindGroup = getDevice().createBindGroup({
             layout: this.pipeline.getBindGroupLayout(2),
             entries: [
                 {
                     binding: 0,
-                    resource: { buffer: lightsBuffer },
+                    resource: { buffer: LightEntity.dirLightBuffer },
+                },
+            ],
+        });
+    }
+
+    generatePipeline() {
+        const layout0 = getDevice().createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: { type: "uniform" },
                 },
             ],
         });
 
-    }
+        const layout1 = getDevice().createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: { type: "filtering" },
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: { sampleType: "float" },
+                },
+            ],
+        });
 
-    generatePipeline() {
+        const layout2 = getDevice().createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: { type: "uniform" },
+                },
+            ],
+        });
+
         const [vertex, fragment] = this.generateStates();
 
+        const pipelineLayout = getDevice().createPipelineLayout({
+            bindGroupLayouts: [layout0, layout1, layout2],
+        });
+
         const pipelineDesc: GPURenderPipelineDescriptor = {
-            layout: "auto",
+            layout: pipelineLayout,
             vertex,
             fragment,
             primitive,
@@ -235,17 +270,33 @@ export class Material {
     }
 
     compileShader() {
-        const bindGroupHeader0 = `@binding(0) @group(0) var<uniform> uniforms : Uniforms;`;
+        const bindGroupHeader0 = `
+
+        struct Uniforms {
+            mvpMatrix: mat4x4f
+        }
+        @binding(0) @group(0) var<uniform> uniforms: Uniforms;`;
 
         //TODO this one should be generated
         const bindGroupHeader1 = `
             @group(1) @binding(0) var albedoSampler: sampler;
             @group(1) @binding(1) var albedo: texture_2d<f32>;
-            `;
+        `;
+
+        const lightBindGroupHeader0 = `
+            struct DirLight {
+                forward: vec3f,
+                intensity: f32,
+                color: vec3f,
+                pad0: f32
+            }
+            @group(2) @binding(0) var<uniform> dirLight: DirLight;
+        `;
 
         const shaderSource = `
         ${bindGroupHeader0}
         ${bindGroupHeader1}
+        ${lightBindGroupHeader0}
 
         
         ${this.vertexCode}

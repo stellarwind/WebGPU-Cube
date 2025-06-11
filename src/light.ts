@@ -1,5 +1,6 @@
 import { Vec3, vec3 } from "wgpu-matrix";
 import { Entity } from "./entity";
+import { getDevice } from "./global-resources";
 export enum LightType {
     Directional,
     Point
@@ -20,6 +21,12 @@ export class LightEntity extends Entity implements LightDescriptor {
     public faloff: number;
     public radius: number;
 
+    private static dirLightBuffer_: GPUBuffer;
+
+    public static get dirLightBuffer() {
+        return LightEntity.dirLightBuffer_ ?? LightEntity.generateBuffers();
+    }
+
     public constructor(descriptor: Partial<LightDescriptor> = {}) {
         super();
         this.type = descriptor.type ?? LightType.Directional;
@@ -27,6 +34,16 @@ export class LightEntity extends Entity implements LightDescriptor {
         this.intensity = descriptor.intensity?? 1.0;
         this.faloff = descriptor.faloff?? 4.0;
         this.radius = descriptor.radius?? 8.0;
+
+    }
+
+    private static generateBuffers(): GPUBuffer {
+
+        LightEntity.dirLightBuffer_ = getDevice().createBuffer({
+            size:  16 * 2, //vec3 + float32 + vec3 + pad 
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
+         return LightEntity.dirLightBuffer_;
     }
 
     public get shaderData() {
