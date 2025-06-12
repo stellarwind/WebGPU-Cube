@@ -1,5 +1,5 @@
-import vertexShaderCode from "./shaders/core_v.wgsl?raw";
-import unlitFragmentShaderCode from "./shaders/core_f.wgsl?raw";
+import vertexShaderCode from "./shaders/lit_vert.wgsl?raw";
+import unlitFragmentShaderCode from "./shaders/lit_frag.wgsl?raw";
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
