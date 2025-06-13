@@ -48,6 +48,20 @@ export class GLTFLoader {
             uvAccessor.count * uvNumComponents
         );
 
+        // Normals
+        const nrmAccessorIndex = primitive.attributes.NORMAL;
+        const nrmAccessor = gltf.accessors[nrmAccessorIndex];
+        const nrmBufferView = gltf.bufferViews[nrmAccessor.bufferView];
+
+        const nrmByteOffset =nrmBufferView.byteOffset;
+        const nrmNumComponents = 3;
+
+        const nrmData = new Float32Array(
+            arrayBuffer,
+            nrmByteOffset,
+            nrmAccessor.count * nrmNumComponents
+        );
+
         // INDICES
         const indexPrimitive = primitive.indices;
 
@@ -64,7 +78,7 @@ export class GLTFLoader {
             indexAccessor.count
         );
 
-        const meshData = new Mesh(vertexData, indexData, null, null, uvData);
+        const meshData = new Mesh(vertexData, indexData, null, nrmData, uvData);
 
         return new Promise((resolve) => {
             resolve(meshData);

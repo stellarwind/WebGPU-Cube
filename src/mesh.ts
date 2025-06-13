@@ -78,6 +78,7 @@ export class Mesh {
 
         // Normals
         if (normals === null) {
+            console.log("No normals found!");
             this.normals = new Float32Array(vertexCount * 3).fill(0);
         } else {
             this.normals = normals;

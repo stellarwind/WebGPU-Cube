@@ -4,7 +4,10 @@ fn main_frag(
     @location(1) uvs: vec2f,
     @location(2) fragNrm: vec3f
     ) -> @location(0) vec4f {
-        var color: vec4f;
-        color = textureSample(albedo, albedoSampler, uvs);
-    return color;
+        var finalColor: vec4f;
+        let L: vec3f = dirLight.forward;
+        let lightMagnitude = dot(fragNrm, -L);
+        let diffuseFinal: f32 = dirLight.intensity * saturate(lightMagnitude);
+        finalColor = textureSample(albedo, albedoSampler, uvs) * diffuseFinal;
+    return finalColor;
 }
