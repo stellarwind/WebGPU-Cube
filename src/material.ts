@@ -315,7 +315,7 @@ export class Material {
     }
 }
 
-export const createUnlitMaterial = async (): Promise<Material> => {
+export const createLitMaterial = async (): Promise<Material> => {
     const img = await loadImageBitmap("uv1.png");
     const texture = getDevice().createTexture({
         size: [img.width, img.height],

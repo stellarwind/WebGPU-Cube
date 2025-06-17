@@ -1,7 +1,7 @@
 import { WebGPURenderer } from "./renderer";
 import { generateCube } from "./primitives";
 import { GLTFLoader } from "./gltf-mesh-loader";
-import { createUnlitMaterial } from "./material";
+import { createLitMaterial } from "./material";
 import { MeshEntity } from "./mesh-entity";
 import { LightEntity, LightType } from "./light";
 import { vec3 } from "wgpu-matrix";
@@ -38,7 +38,7 @@ const run = async () => {
     const gltfEntity2 = new MeshEntity(gltfMesh2); 
 
     const mesh = gltfEntity2.mesh!;
-    mesh.material = await createUnlitMaterial();
+    mesh.material = await createLitMaterial();
     await mesh.material.setTexture("albedo", "./mesh/octo.png");
     gltfEntity2.transform.setScale(3, 3, 3);
     gltfEntity2.transform.translate(0, 0, 0);
