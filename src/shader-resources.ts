@@ -1,4 +1,4 @@
-interface BindingGroupResource {
+export interface BindingGroupResource {
     name: string,
     wgsl: string
 }
@@ -22,7 +22,7 @@ export const dirLightUniform: BindingGroupResource = {
             color: vec3f,
             pad0: f32
         };
-        @group(2) @binding(0) var<uniform> dirLight: DirLight;
+        @group(0) @binding(1) var<uniform> dirLight: DirLight;
     `
 };
 

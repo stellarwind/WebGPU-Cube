@@ -40,7 +40,7 @@ export class LightEntity extends Entity implements LightDescriptor {
     private static generateBuffers(): GPUBuffer {
 
         LightEntity.dirLightBuffer_ = getDevice().createBuffer({
-            size:  16 * 2, //vec3 + float32 + vec3 + pad 
+            size:  16 * 2, //vec3 + float32 + vec3 + pad
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
          return LightEntity.dirLightBuffer_;

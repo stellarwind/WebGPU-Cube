@@ -22,14 +22,18 @@ export class WebGPURenderer {
     private readonly lightEntityList: Array<LightEntity> = [];
 
     private get dirLight() {
-        return (
-            this.lightEntityList.find((e) => e.type === LightType.Directional) ??
-            new LightEntity({
-                type: LightType.Directional,
-                intensity: 0.0,
-                color: vec3.create(0, 0, 0),
-            })
+        const dir = this.lightEntityList.find(
+            (e) => e.type === LightType.Directional
         );
+
+        if (dir) return dir;
+        else {
+            return new LightEntity({
+                type: LightType.Directional,
+                intensity: 1.0,
+                color: vec3.create(1, 1, 1),
+            });
+        }
     }
 
     private lastFrameMS: number = Date.now();
@@ -97,28 +101,22 @@ export class WebGPURenderer {
         );
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
-        // Write light buffers
-        const dirLight = this.dirLight;
-            
         getQueue().writeBuffer(
             LightEntity.dirLightBuffer,
             0,
-            dirLight.shaderData,
-            // dirLight.shaderData.byteOffset,
-            // dirLight.shaderData.byteLength
+            this.dirLight.shaderData
         );
-        
+
         // Render meshes
         for (let i = 0; i < this.meshEntityList.length; i++) {
             const meshEntity = this.meshEntityList[i];
             const mesh = meshEntity.mesh;
             const material = mesh?.material;
             const pipe = material?.getPipeline;
-            
+
             if (!mesh || !pipe || !material.ready) continue;
-            
+
             pass.setPipeline(pipe);
-            
 
             meshEntity.transform.calculateMVPMatrix(
                 viewMatrix,
@@ -136,11 +134,9 @@ export class WebGPURenderer {
 
             const commondBindGrp = mesh.material.getCommonBindGroup;
             const matBindGrp = mesh.material.getMaterialBindGroup;
-            const lightBindGrp = mesh.material.getLightsBindGroup;
 
             pass.setBindGroup(0, commondBindGrp);
             pass.setBindGroup(1, matBindGrp);
-            pass.setBindGroup(2, lightBindGrp);
 
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);
