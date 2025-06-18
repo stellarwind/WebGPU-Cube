@@ -1,5 +1,6 @@
 import vertexShaderCode from "./shaders/lit_vert.wgsl?raw";
 import unlitFragmentShaderCode from "./shaders/lit_frag.wgsl?raw";
+import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
@@ -208,7 +209,7 @@ export class Material {
     }
 
     generatePipeline() {
-        const layout0 = getDevice().createBindGroupLayout({
+        const commonBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
@@ -223,7 +224,7 @@ export class Material {
             ],
         });
 
-        const layout1 = getDevice().createBindGroupLayout({
+        const materialBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
@@ -241,7 +242,7 @@ export class Material {
         const [vertex, fragment] = this.generateStates();
 
         const pipelineLayout = getDevice().createPipelineLayout({
-            bindGroupLayouts: [layout0, layout1],
+            bindGroupLayouts: [commonBindGroupLayout, materialBindGroupLayout],
         });
 
         const pipelineDesc: GPURenderPipelineDescriptor = {
@@ -260,6 +261,8 @@ export class Material {
         ${globalUniforms.wgsl}
         ${dirLightUniform.wgsl}
         ${albedoBindGroup.wgsl}
+
+        ${commonShaderHeader}
 
         ${this.vertexCode}
         

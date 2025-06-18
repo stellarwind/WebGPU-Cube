@@ -49,7 +49,7 @@ const run = async () => {
         intensity: 1.0,
         color: vec3.create(1, 1 ,1)
     });
-    dirLight.transform.rotate(45, 45, 45);
+    dirLight.transform.rotate(0, 0, 45);
     renderer.addEntity(dirLight);
 };
 
