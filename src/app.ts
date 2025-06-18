@@ -47,9 +47,9 @@ const run = async () => {
     const dirLight = new LightEntity({
         type: LightType.Directional,
         intensity: 1.0,
-        color: vec3.create(1, 1 ,1)
+        color: vec3.create(1, 1 ,0)
     });
-    dirLight.transform.rotate(0, 0, 45);
+    dirLight.transform.rotate(45, 45, 0);
     renderer.addEntity(dirLight);
 };
 

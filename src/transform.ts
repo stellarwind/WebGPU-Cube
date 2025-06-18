@@ -41,15 +41,15 @@ export class Transform {
     public get forward(): Vec3 {
         const localf = vec3.create(0, 0, -1);
         const rotQuat = quat.fromEuler(
-            utils.degToRad(this.rotation_[0]),
-            utils.degToRad(this.rotation_[1]),
-            utils.degToRad(this.rotation_[2]),
+            this.rotation_[0],
+            this.rotation_[1],
+            this.rotation_[2],
             "xyz"
         );
         const mat = mat4.fromQuat(rotQuat);
-        vec3.transformMat4(localf, mat, localf);
+        const forward = vec3.transformMat4(localf, mat );
 
-        return vec3.normalize(localf);
+        return vec3.normalize(forward);
     }
 
     private mvpMatrix_: Mat4 = mat4.create();
