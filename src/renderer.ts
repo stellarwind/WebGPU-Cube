@@ -10,7 +10,7 @@ import { Camera } from "./camera";
 import { Input } from "./input";
 import { MeshEntity } from "./mesh-entity";
 import { LightEntity, LightType } from "./light";
-import { vec3 } from "wgpu-matrix";
+import { dummyDirLight } from "./light-manager";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -22,18 +22,7 @@ export class WebGPURenderer {
     private readonly lightEntityList: Array<LightEntity> = [];
 
     private get dirLight() {
-        const dir = this.lightEntityList.find(
-            (e) => e.type === LightType.Directional
-        );
-
-        if (dir) return dir;
-        else {
-            return new LightEntity({
-                type: LightType.Directional,
-                intensity: 1.0,
-                color: vec3.create(1, 1, 1),
-            });
-        }
+        return this.lightEntityList.find((e) => e.type === LightType.Directional) ?? dummyDirLight;
     }
 
     private lastFrameMS: number = Date.now();

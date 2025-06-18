@@ -53,8 +53,8 @@ const run = async () => {
     renderer.addEntity(dirLight);
 };
 
-export default () => {
-    run();
+export default async () => {
+    await run();
     let lastFrameTime = performance.now();
     const renderLoop = () => {
         const currentFrame = performance.now() - lastFrameTime;
