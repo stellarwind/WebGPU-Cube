@@ -65,12 +65,13 @@ export class Camera extends Entity {
     }
 
     public orbitQuat(yaw: number, pitch: number, distance: number) {
-
         this.distance += distance * this.zoomSpeed;
         this.distance = clamp(this.distance, this.minDist, this.maxDist);
 
-        this.yawAngle += utils.degToRad(utils.degToRad(yaw));
-        this.pitchAngle += utils.degToRad(utils.degToRad(pitch));
+        this.yawAngle += utils.degToRad(yaw);
+        this.pitchAngle += utils.degToRad(pitch);
+
+        this.transform.rotate(this.pitchAngle, this.yawAngle, 0); //Sync our transform
 
         const quatYaw = quat.fromAxisAngle(this.up, this.yawAngle);
         const quatPitch = quat.fromAxisAngle([1, 0, 0], this.pitchAngle);

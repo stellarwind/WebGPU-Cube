@@ -52,7 +52,7 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":14351,
+			"count":13801,
 			"max":[
 				0.4661719799041748,
 				0.4587470591068268,
@@ -68,51 +68,51 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":14351,
+			"count":13801,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":14351,
+			"count":13801,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":58794,
+			"count":55914,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":172212,
+			"byteLength":165612,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":172212,
-			"byteOffset":172212,
+			"byteLength":165612,
+			"byteOffset":165612,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":114808,
-			"byteOffset":344424,
+			"byteLength":110408,
+			"byteOffset":331224,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":117588,
-			"byteOffset":459232,
+			"byteLength":111828,
+			"byteOffset":441632,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":576820,
+			"byteLength":553460,
 			"uri":"octo.bin"
 		}
 	]
