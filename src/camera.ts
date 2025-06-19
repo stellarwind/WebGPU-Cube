@@ -71,7 +71,7 @@ export class Camera extends Entity {
         this.yawAngle += utils.degToRad(yaw);
         this.pitchAngle += utils.degToRad(pitch);
 
-        this.transform.rotate(this.pitchAngle, this.yawAngle, 0); //Sync our transform
+        this.transform.rotate(this.pitchAngle, this.yawAngle, 0); // Sync our transform
 
         const quatYaw = quat.fromAxisAngle(this.up, this.yawAngle);
         const quatPitch = quat.fromAxisAngle([1, 0, 0], this.pitchAngle);
@@ -84,5 +84,12 @@ export class Camera extends Entity {
 
     public update(): [Mat4, Mat4] {
         return [this.projectionMatrix, this.viewMatrix];
+    }
+
+    public get shaderData(): Float32Array {
+        const forward = this.transform.forward;
+        return new Float32Array([
+            forward[0], forward[1], forward[2], 0 // Just pass direction for now
+        ]);
     }
 }

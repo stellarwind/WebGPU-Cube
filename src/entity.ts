@@ -1,11 +1,13 @@
 import { Transform } from "./transform";
 
-export class Entity {
+export abstract class Entity {
     private transform_: Transform = new Transform();
 
     public get transform() {
         return this.transform_;
     }
+
+    abstract get shaderData(): Float32Array;
 
     public name: string = "";
 

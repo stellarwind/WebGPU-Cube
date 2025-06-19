@@ -17,4 +17,8 @@ export class MeshEntity extends Entity {
         super(name);
         this.setMesh(mesh!);
     }
+
+    public get shaderData(): Float32Array {
+        return new Float32Array(this.transform.mvpMatrix); // Instancing data
+    }
 }
