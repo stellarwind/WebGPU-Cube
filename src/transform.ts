@@ -58,23 +58,27 @@ export class Transform {
         return mat4.copy(this.mvpMatrix_);
     }
 
-    private modelMatrix: Mat4 = mat4.create();
+    private modelMatrix_: Mat4 = mat4.create();
+
+    public get modelMatrix(): Mat4 {
+        return this.modelMatrix_;
+    }
 
     public calculateMVPMatrix(viewMatrix: Mat4, projectionMatrix: Mat4): Mat4 {
         if (!this.dirty) return this.mvpMatrix_;
 
-        mat4.identity(this.modelMatrix);
+        mat4.identity(this.modelMatrix_);
 
-        mat4.translate( this.modelMatrix, this.position, this.modelMatrix);
+        mat4.translate( this.modelMatrix_, this.position, this.modelMatrix_);
 
-        mat4.rotateX( this.modelMatrix, this.rotation[0], this.modelMatrix);
-        mat4.rotateY( this.modelMatrix, this.rotation[1], this.modelMatrix);
-        mat4.rotateZ( this.modelMatrix, this.rotation[2], this.modelMatrix);
+        mat4.rotateX( this.modelMatrix_, this.rotation[0], this.modelMatrix_);
+        mat4.rotateY( this.modelMatrix_, this.rotation[1], this.modelMatrix_);
+        mat4.rotateZ( this.modelMatrix_, this.rotation[2], this.modelMatrix_);
 
-        mat4.scale(this.modelMatrix, this.scale, this.modelMatrix);
+        mat4.scale(this.modelMatrix_, this.scale, this.modelMatrix_);
 
         mat4.multiply(projectionMatrix, viewMatrix, this.mvpMatrix_);
-        mat4.multiply(this.mvpMatrix_, this.modelMatrix, this.mvpMatrix_);
+        mat4.multiply(this.mvpMatrix_, this.modelMatrix_, this.mvpMatrix_);
 
         return this.mvpMatrix_;
     }

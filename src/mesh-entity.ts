@@ -19,6 +19,6 @@ export class MeshEntity extends Entity {
     }
 
     public get shaderData(): Float32Array {
-        return new Float32Array(this.transform.mvpMatrix); // Instancing data
+        return Float32Array.of(...this.transform.mvpMatrix, ...this.transform.modelMatrix); 
     }
 }

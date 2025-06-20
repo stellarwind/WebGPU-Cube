@@ -1,4 +1,4 @@
-import { Mat4, mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
+import { Mat4, mat4, quat, utils, vec3} from "wgpu-matrix";
 import { defaultSettings } from "./settings";
 import { clamp } from "./util";
 import { Entity } from "./entity";
@@ -18,8 +18,7 @@ export class Camera extends Entity {
         this.fov = (value * Math.PI) / 180;
     }
 
-    private aspect =
-        defaultSettings.resolution.width / defaultSettings.resolution.height;
+    private aspect = defaultSettings.resolution.width / defaultSettings.resolution.height;
 
     private near = 0.1;
 
@@ -33,24 +32,7 @@ export class Camera extends Entity {
         this.far = Math.max(this.near + 0.001, value);
     }
 
-    private projectionMatrix = mat4.perspective(
-        this.fov,
-        this.aspect,
-        this.near,
-        this.far
-    ); // Actually [-zNear -> -zFar]
-
-    private cameraPos: Vec3 = vec3.fromValues(0, 0, 0);
-
-    public set setCameraPos(value: Vec3) {
-        if (value != this.targetPos) this.cameraPos = value;
-    }
-
-    private targetPos: Vec3 = vec3.fromValues(0, 0, -1);
-
-    public set setTargetPos(value: Vec3) {
-        if (value != this.cameraPos) this.targetPos = value;
-    }
+    private projectionMatrix = mat4.perspective(this.fov, this.aspect, this.near, this.far); // Actually [-zNear -> -zFar]
 
     private readonly up = vec3.fromValues(0, 1, 0);
 
@@ -71,15 +53,17 @@ export class Camera extends Entity {
         this.yawAngle += utils.degToRad(yaw);
         this.pitchAngle += utils.degToRad(pitch);
 
-        this.transform.rotate(this.pitchAngle, this.yawAngle, 0); // Sync our transform
-
+        
         const quatYaw = quat.fromAxisAngle(this.up, this.yawAngle);
         const quatPitch = quat.fromAxisAngle([1, 0, 0], this.pitchAngle);
         const transformQuat = quat.multiply(quatYaw, quatPitch);
-
+        
         const cameraMatrix = mat4.fromQuat(transformQuat);
         mat4.translate(cameraMatrix, [0, 0, this.distance], cameraMatrix);
         this.viewMatrix = mat4.invert(cameraMatrix);
+
+        this.transform.rotate(this.pitchAngle, this.yawAngle, 0); // Sync our transform
+        this.transform.translate(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]);
     }
 
     public update(): [Mat4, Mat4] {
@@ -88,8 +72,9 @@ export class Camera extends Entity {
 
     public get shaderData(): Float32Array {
         const forward = this.transform.forward;
+        const pos = this.transform.position;
         return new Float32Array([
-            forward[0], forward[1], forward[2], 0 // Just pass direction for now
-        ]);
+            forward[0], forward[1], forward[2], 0, 
+            pos[0], pos[1], pos[2], 0]); 
     }
 }

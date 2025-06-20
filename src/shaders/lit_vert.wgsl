@@ -2,7 +2,8 @@ struct VSOut {
     @builtin(position) Position: vec4f,
     @location(0) color: vec3f,
     @location(1) uv: vec2f,
-    @location(2) outNrm: vec3f
+    @location(2) outNrm: vec3f,
+    @location(3) worldPos: vec3f
  };
 
 @vertex
@@ -17,6 +18,7 @@ fn main_vert(@location(0) inPos: vec4f,
     vsOut.Position =  uniforms.mvpMatrix * inPos;
     vsOut.color = col.xyz;
     vsOut.outNrm = inNrm;
+    vsOut.worldPos = (inPos * uniforms.modelMatrix).xyz;
     return vsOut;
 }
 

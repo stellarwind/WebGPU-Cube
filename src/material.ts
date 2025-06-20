@@ -5,7 +5,7 @@ import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
 import { LightEntity } from "./light";
-import { albedoBindGroup, dirLightUniform, globalUniforms } from "./shader-resources";
+import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform } from "./shader-resources";
 
 interface ShaderProperties {
     textures: Record<string, TextureDef>;
@@ -159,23 +159,34 @@ export class Material {
 
     async generateCommonBindGroup() {
         this.MVPUniformBuffer = getDevice().createBuffer({
-            size: 4 * 16, // 4x4 MVP * 4 bytes float
+            size: 4 * 16 * 2, // 2x 4x4 MVP * 4 bytes float
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
-        this.commonBindGroup = getDevice().createBindGroup({
-            layout: this.pipeline.getBindGroupLayout(0),
-            entries: [
-                {
-                    binding: 0,
-                    resource: { buffer: this.MVPUniformBuffer },
-                },
-                {
-                    binding: 1,
-                    resource: { buffer: LightEntity.dirLightBuffer },
-                },
-            ],
-        });
+        const camBuffer = getBuffer("camera");
+
+        if (camBuffer) {
+            this.commonBindGroup = getDevice().createBindGroup({
+                layout: this.pipeline.getBindGroupLayout(0),
+                entries: [
+                    {
+                        binding: 0,
+                        resource: { buffer: this.MVPUniformBuffer },
+                    },
+                    {
+                        binding: 1,
+                        resource: { buffer: LightEntity.dirLightBuffer },
+                    },
+                    {
+                        binding: 2,
+                        resource: { buffer: camBuffer as GPUBuffer },
+                    },
+                ],
+            });
+        } else {
+            throw new Error("Camera buffer not initialized");
+        }
+
     }
 
     async generateMaterialBindGroup() {
@@ -221,6 +232,11 @@ export class Material {
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: { type: "uniform" },
                 },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: { type: "uniform" }
+                }
             ],
         });
 
@@ -258,8 +274,9 @@ export class Material {
 
     compileShader() {
         const shaderSource = `
-        ${globalUniforms.wgsl}
+        ${globalUniform.wgsl}
         ${dirLightUniform.wgsl}
+        ${cameraUniform.wgsl}
         ${albedoBindGroup.wgsl}
 
         ${commonShaderHeader}
@@ -268,7 +285,6 @@ export class Material {
         
         ${this.fragmentCode}
         `;
-
         try {
             this.assembledShaderModule = getDevice().createShaderModule({
                 code: shaderSource,

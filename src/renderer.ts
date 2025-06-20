@@ -11,6 +11,7 @@ import { Input } from "./input";
 import { MeshEntity } from "./mesh-entity";
 import { LightEntity, LightType } from "./light";
 import { dummyDirLight } from "./light-manager";
+import { createBuffer, getBuffer } from "./shader-resources";
 
 export class WebGPURenderer {
     private context: GPUCanvasContext | null = null;
@@ -53,6 +54,8 @@ export class WebGPURenderer {
         });
 
         this.simpleOrbitCam = new Camera();
+
+        createBuffer("camera", 32);
     }
 
     public renderFrame() {
@@ -90,11 +93,12 @@ export class WebGPURenderer {
         );
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
-        getQueue().writeBuffer(
-            LightEntity.dirLightBuffer,
-            0,
-            this.dirLight.shaderData
-        );
+        getQueue().writeBuffer(LightEntity.dirLightBuffer, 0, this.dirLight.shaderData);
+
+        const camBuffer = getBuffer("camera");
+        if (camBuffer) {
+            getQueue().writeBuffer(camBuffer, 0, this.simpleOrbitCam.shaderData);
+        }
 
         // Render meshes
         for (let i = 0; i < this.meshEntityList.length; i++) {
@@ -112,7 +116,7 @@ export class WebGPURenderer {
                 projectionMatrix
             );
 
-            const mvpArray = new Float32Array(meshEntity.transform.mvpMatrix);
+            const mvpArray = meshEntity.shaderData;
             getQueue().writeBuffer(
                 mesh.material.getMVPUniformBuffer,
                 0,
