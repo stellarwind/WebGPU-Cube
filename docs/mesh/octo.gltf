@@ -8,7 +8,7 @@
 		{
 			"name":"Scene",
 			"nodes":[
-				1
+				0
 			]
 		}
 	],
@@ -16,17 +16,11 @@
 		{
 			"mesh":0,
 			"name":"geometry_0"
-		},
-		{
-			"children":[
-				0
-			],
-			"name":"octo"
 		}
 	],
 	"materials":[
 		{
-			"name":"Material_0",
+			"name":"Material_0.001",
 			"pbrMetallicRoughness":{
 				"baseColorFactor":[
 					0.4000000059604645,
@@ -34,16 +28,13 @@
 					0.4000000059604645,
 					1
 				],
-				"baseColorTexture":{
-					"index":0
-				},
 				"roughnessFactor":0.9036020040512085
 			}
 		}
 	],
 	"meshes":[
 		{
-			"name":"geometry_0",
+			"name":"geometry_0.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -57,24 +48,11 @@
 			]
 		}
 	],
-	"textures":[
-		{
-			"sampler":0,
-			"source":0
-		}
-	],
-	"images":[
-		{
-			"mimeType":"image/png",
-			"name":"octo",
-			"uri":"textures/octo.png"
-		}
-	],
 	"accessors":[
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":55900,
+			"count":13801,
 			"max":[
 				0.4661719799041748,
 				0.4587470591068268,
@@ -90,13 +68,13 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":55900,
+			"count":13801,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":55900,
+			"count":13801,
 			"type":"VEC2"
 		},
 		{
@@ -109,38 +87,32 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":670800,
+			"byteLength":165612,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":670800,
-			"byteOffset":670800,
+			"byteLength":165612,
+			"byteOffset":165612,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":447200,
-			"byteOffset":1341600,
+			"byteLength":110408,
+			"byteOffset":331224,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":111828,
-			"byteOffset":1788800,
+			"byteOffset":441632,
 			"target":34963
-		}
-	],
-	"samplers":[
-		{
-			"magFilter":9729,
-			"minFilter":9987
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":1900628,
+			"byteLength":553460,
 			"uri":"octo.bin"
 		}
 	]

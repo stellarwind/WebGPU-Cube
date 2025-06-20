@@ -12,27 +12,12 @@ const renderer = new WebGPURenderer();
 const run = async () => {
     await renderer.init("viewport");
 
-    // const entity = renderer.addEntity();
-    // const entitymesh = entity.addMesh(generateCube());
-    // entitymesh.material = await createUnlitMaterial();
-    // entitymesh.material.setTexture("albedo", "./test.jpg");
-    // entity.transform.translate(-3.3, 0, -1);
-    // entity.transform.rotate(90, 0, 0);
-
-    // const entity2 = renderer.addEntity();
-    // const entity2mesh = entity2.addMesh(generateCube());
-    // entity2mesh.material = await createUnlitMaterial();
-    // entity2mesh.material.setTexture("albedo", "./test.jpg");
-    // entity2.transform.translate(3.5, 0, 1);
-    // entity2.transform.rotate(0, 0, 0);
-
-    // const gltfMesh = await GLTFLoader.loadFile("./mesh/suzanne.gltf");
-    // const gltfEntity = renderer.addEntity();
-    // const gltfEntityMesh = gltfEntity.addMesh(gltfMesh);
-    // gltfEntityMesh.material = await createUnlitMaterial();
-    // gltfEntity.transform.setScale(1, 1, 1);
-    // gltfEntity.transform.rotate(0, 45, 0);
-    // gltfEntity.transform.translate(-3, 2.5, 0);
+    const cubeMesh = generateCube();
+    const cubeEntity = new MeshEntity(cubeMesh);
+    cubeMesh.material = await createLitMaterial();
+    cubeMesh.material.setTexture("albedo", "./test.jpg");
+    cubeEntity.transform.translate(3.5, 0, 1);
+    renderer.addEntity(cubeEntity);
 
     const gltfMesh2 = await GLTFLoader.loadFile("./mesh/octo.gltf");
     const gltfEntity2 = new MeshEntity(gltfMesh2); 
