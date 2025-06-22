@@ -16,7 +16,7 @@ fn computeSpecular(viewDir: vec3f, normal: vec3f, lightDir: vec3f, exponent: f32
     let L = normalize(lightDir);
     let V = normalize(viewDir);
 
-    let R = reflect(N, -L);
+    let R = reflect(-L, N);
     let specBase = saturate(dot(R, V));
     return pow(specBase, exponent);
 }
