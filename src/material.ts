@@ -164,8 +164,9 @@ export class Material {
         });
 
         const camBuffer = getBuffer("camera");
+        const dirlightBuffer = getBuffer("dirLight");
 
-        if (camBuffer) {
+        if (camBuffer && dirlightBuffer) {
             this.commonBindGroup = getDevice().createBindGroup({
                 layout: this.pipeline.getBindGroupLayout(0),
                 entries: [
@@ -175,7 +176,7 @@ export class Material {
                     },
                     {
                         binding: 1,
-                        resource: { buffer: LightEntity.dirLightBuffer },
+                        resource: { buffer: dirlightBuffer },
                     },
                     {
                         binding: 2,

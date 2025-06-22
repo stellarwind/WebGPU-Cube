@@ -56,6 +56,7 @@ export class WebGPURenderer {
         this.simpleOrbitCam = new Camera();
 
         createBuffer("camera", 32);
+        createBuffer("dirLight", 32); //vec3 + float32 + vec3 + pad
     }
 
     public renderFrame() {
@@ -93,7 +94,10 @@ export class WebGPURenderer {
         );
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
-        getQueue().writeBuffer(LightEntity.dirLightBuffer, 0, this.dirLight.shaderData);
+        const dirlightBuffer = getBuffer("dirLight");
+        if (dirlightBuffer) {
+            getQueue().writeBuffer(dirlightBuffer, 0, this.dirLight.shaderData);
+        }
 
         const camBuffer = getBuffer("camera");
         if (camBuffer) {
