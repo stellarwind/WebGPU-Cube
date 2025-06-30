@@ -63,7 +63,7 @@ export class Camera extends Entity {
         this.viewMatrix = mat4.invert(cameraMatrix);
 
         this.transform.rotate(this.pitchAngle, this.yawAngle, 0); // Sync our transform
-        this.transform.translate(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]);
+        this.transform.translate(cameraMatrix[12], cameraMatrix[13], cameraMatrix[14]); // translation column
     }
 
     public update(): [Mat4, Mat4] {

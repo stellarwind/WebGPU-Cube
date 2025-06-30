@@ -111,8 +111,9 @@ export class WebGPURenderer {
             const mesh = meshEntity.mesh;
             const material = mesh?.material;
             const pipe = material?.getPipeline;
+            const mvpBuffer = getBuffer("mvp");
 
-            if (!mesh || !pipe || !material.ready) continue;
+            if (!mesh || !pipe || !material.ready || !mvpBuffer) continue;
 
             pass.setPipeline(pipe);
 
@@ -123,15 +124,14 @@ export class WebGPURenderer {
             
             const mvpBindGroup = meshEntity.mvpBindGroup;
             const lightsBindGroup = mesh.material.getLightsBindGroup;
-            const matBindGrp = mesh.material.getMaterialBindGroup;
+            const matBindGroup = mesh.material.getMaterialBindGroup;
             const offset = i * 256;
-            const buffer = getBuffer("mvp");
 
-            getDevice().queue.writeBuffer(buffer!, offset, meshEntity.shaderData);
+            getDevice().queue.writeBuffer(mvpBuffer, offset, meshEntity.shaderData);
 
             pass.setBindGroup(0, mvpBindGroup);
             pass.setBindGroup(1, lightsBindGroup);
-            pass.setBindGroup(2, matBindGrp);
+            pass.setBindGroup(2, matBindGroup);
 
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);
@@ -151,7 +151,6 @@ export class WebGPURenderer {
     public addEntity(entity: Entity) {
         if (entity instanceof MeshEntity) {
             this.meshEntityList.push(entity);
-            const buffer = getBuffer("mvp");
             const offset = (this.meshEntityList.length - 1) * 256;
             entity.generateMVPBindGroup(offset);
         } else if (entity instanceof LightEntity) {
