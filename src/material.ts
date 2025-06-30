@@ -4,7 +4,6 @@ import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
-import { LightEntity } from "./light";
 import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform } from "./shader-resources";
 
 interface ShaderProperties {
@@ -31,15 +30,11 @@ export class Material {
     private fragmentCode: string = "";
 
     public readonly properties: ShaderProperties;
-    private MVPUniformBuffer!: GPUBuffer;
+    
+    private lightsBindGroup!: GPUBindGroup;
 
-    get getMVPUniformBuffer() {
-        return this.MVPUniformBuffer;
-    }
-    private commonBindGroup!: GPUBindGroup;
-
-    get getCommonBindGroup() {
-        return this.commonBindGroup;
+    get getLightsBindGroup() {
+        return this.lightsBindGroup;
     }
 
     private materialBindGroup!: GPUBindGroup;
@@ -48,15 +43,9 @@ export class Material {
         return this.materialBindGroup;
     }
 
-    private lightsBindGroup!: GPUBindGroup;
-
-    get getLightsBindGroup() {
-        return this.lightsBindGroup;
-    }
-
     get ready() {
         return (
-            this.commonBindGroup != undefined &&
+            this.lightsBindGroup != undefined &&
             this.materialBindGroup != undefined
         );
     }
@@ -158,29 +147,20 @@ export class Material {
     }
 
     async generateCommonBindGroup() {
-        this.MVPUniformBuffer = getDevice().createBuffer({
-            size: 4 * 16 * 2, // 2x 4x4 MVP * 4 bytes float
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-
         const camBuffer = getBuffer("camera");
         const dirlightBuffer = getBuffer("dirLight");
-
+        
         if (camBuffer && dirlightBuffer) {
-            this.commonBindGroup = getDevice().createBindGroup({
-                layout: this.pipeline.getBindGroupLayout(0),
+            this.lightsBindGroup = getDevice().createBindGroup({
+                layout: this.pipeline.getBindGroupLayout(1),
                 entries: [
                     {
                         binding: 0,
-                        resource: { buffer: this.MVPUniformBuffer },
-                    },
-                    {
-                        binding: 1,
                         resource: { buffer: dirlightBuffer },
                     },
                     {
-                        binding: 2,
-                        resource: { buffer: camBuffer as GPUBuffer },
+                        binding: 1,
+                        resource: { buffer: camBuffer },
                     },
                 ],
             });
@@ -205,7 +185,7 @@ export class Material {
                 minFilter: "linear",
             });
             this.materialBindGroup = getDevice().createBindGroup({
-                layout: this.pipeline.getBindGroupLayout(1), //TODO increase layout index for each texture
+                layout: this.pipeline.getBindGroupLayout(2),
                 entries: [
                     {
                         binding: 0,
@@ -221,20 +201,25 @@ export class Material {
     }
 
     generatePipeline() {
-        const commonBindGroupLayout = getDevice().createBindGroupLayout({
+        const matricesBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
                 {
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: { type: "uniform" },
                 },
+            ],
+        });
+
+        const lightsBindGroupLayout = getDevice().createBindGroupLayout({
+            entries: [
                 {
-                    binding: 1,
+                    binding: 0,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: { type: "uniform" },
                 },
                 {
-                    binding: 2,
+                    binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: { type: "uniform" }
                 }
@@ -259,7 +244,7 @@ export class Material {
         const [vertex, fragment] = this.generateStates();
 
         const pipelineLayout = getDevice().createPipelineLayout({
-            bindGroupLayouts: [commonBindGroupLayout, materialBindGroupLayout],
+            bindGroupLayouts: [matricesBindGroupLayout, lightsBindGroupLayout, materialBindGroupLayout],
         });
 
         const pipelineDesc: GPURenderPipelineDescriptor = {

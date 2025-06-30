@@ -56,7 +56,8 @@ export class WebGPURenderer {
         this.simpleOrbitCam = new Camera();
 
         createBuffer("camera", 32);
-        createBuffer("dirLight", 32); //vec3 + float32 + vec3 + pad
+        createBuffer("dirLight", 32); // vec3 + float32 + vec3 + pad
+        createBuffer("mvp", defaultSettings.maxStaticObjects * 256); // 256 byte align for bind group offsets
     }
 
     public renderFrame() {
@@ -119,21 +120,18 @@ export class WebGPURenderer {
                 viewMatrix,
                 projectionMatrix
             );
-
-            const mvpArray = meshEntity.shaderData;
-            getQueue().writeBuffer(
-                mesh.material.getMVPUniformBuffer,
-                0,
-                mvpArray.buffer,
-                mvpArray.byteOffset,
-                mvpArray.byteLength
-            );
-
-            const commondBindGrp = mesh.material.getCommonBindGroup;
+            
+            const mvpBindGroup = meshEntity.mvpBindGroup;
+            const lightsBindGroup = mesh.material.getLightsBindGroup;
             const matBindGrp = mesh.material.getMaterialBindGroup;
+            const offset = i * 256;
+            const buffer = getBuffer("mvp");
 
-            pass.setBindGroup(0, commondBindGrp);
-            pass.setBindGroup(1, matBindGrp);
+            getDevice().queue.writeBuffer(buffer!, offset, meshEntity.shaderData);
+
+            pass.setBindGroup(0, mvpBindGroup);
+            pass.setBindGroup(1, lightsBindGroup);
+            pass.setBindGroup(2, matBindGrp);
 
             pass.setVertexBuffer(0, mesh.positionBuffer);
             pass.setVertexBuffer(1, mesh.colorBuffer);
@@ -153,8 +151,13 @@ export class WebGPURenderer {
     public addEntity(entity: Entity) {
         if (entity instanceof MeshEntity) {
             this.meshEntityList.push(entity);
+            const buffer = getBuffer("mvp");
+            const offset = (this.meshEntityList.length - 1) * 256;
+            entity.generateMVPBindGroup(offset);
         } else if (entity instanceof LightEntity) {
             this.lightEntityList.push(entity);
-        } else this.entityList.push(entity);
+        } else {
+            this.entityList.push(entity);
+        } 
     }
 }

@@ -13,7 +13,7 @@ fn main_vert(@location(0) inPos: vec4f,
 
     var col: vec4f;
     vsOut.uv = inUV;
-    vsOut.Position =  uniforms.mvpMatrix * inPos;
+    vsOut.Position =  matrices.mvpMatrix * inPos;
     vsOut.color = col.xyz;
     return vsOut;
 }

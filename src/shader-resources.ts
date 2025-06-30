@@ -33,7 +33,7 @@ export const globalUniform: BindingGroupResource = {
             mvpMatrix: mat4x4f,
             modelMatrix: mat4x4f
         }
-        @binding(0) @group(0) var<uniform> uniforms: Uniforms;
+        @group(0) @binding(0) var<uniform> matrices: Uniforms;
     `
 };
 
@@ -46,7 +46,7 @@ export const dirLightUniform: BindingGroupResource = {
         color: vec3f,
         pad0: f32
         };
-        @group(0) @binding(1) var<uniform> dirLight: DirLight;
+        @group(1) @binding(0) var<uniform> dirLight: DirLight;
         `
     };
     
@@ -57,15 +57,15 @@ export const cameraUniform: BindingGroupResource = {
             forward: vec3f,
             position: vec3f
         }
-        @group(0) @binding(2) var<uniform> mainCam: Camera;
+        @group(1) @binding(1) var<uniform> mainCam: Camera;
     `
 };
 
 export const albedoBindGroup: BindingGroupResource = {
     name: "Albedo Texture Sampler",
     wgsl: `
-        @group(1) @binding(0) var albedoSampler: sampler;
-        @group(1) @binding(1) var albedo: texture_2d<f32>;
+        @group(2) @binding(0) var albedoSampler: sampler;
+        @group(2) @binding(1) var albedo: texture_2d<f32>;
     `
 };
 
