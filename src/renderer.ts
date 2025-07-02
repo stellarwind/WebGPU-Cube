@@ -1,9 +1,4 @@
-import {
-    getDevice,
-    getQueue,
-    getDepthTextureView,
-    initResources,
-} from "./global-resources";
+import { getDevice, getQueue, getDepthTextureView, initResources } from "./global-resources";
 import { Entity } from "./entity";
 import { defaultSettings } from "./settings";
 import { Camera } from "./camera";
@@ -55,8 +50,8 @@ export class WebGPURenderer {
 
         this.simpleOrbitCam = new Camera();
 
-        createBuffer("camera", 32);
-        createBuffer("dirLight", 32); // vec3 + float32 + vec3 + pad
+        createBuffer("camera", 32); // vec3 + pad0 + vec3 + pad1
+        createBuffer("dirLight", 32); // vec3 + float32 + vec3 + pad0
         createBuffer("mvp", defaultSettings.maxStaticObjects * 256); // 256 byte align for bind group offsets
     }
 
@@ -88,22 +83,14 @@ export class WebGPURenderer {
             },
         });
 
-        this.simpleOrbitCam.orbitQuat(
-            this.input.x * deltaTime,
-            this.input.y * deltaTime,
-            this.input.scrollDelta
-        );
+        this.simpleOrbitCam.orbitQuat(this.input.x * deltaTime, this.input.y * deltaTime, this.input.scrollDelta);
         const [projectionMatrix, viewMatrix] = this.simpleOrbitCam.update();
 
         const dirlightBuffer = getBuffer("dirLight");
-        if (dirlightBuffer) {
-            getQueue().writeBuffer(dirlightBuffer, 0, this.dirLight.shaderData);
-        }
+        getQueue().writeBuffer(dirlightBuffer!, 0, this.dirLight.shaderData);
 
         const camBuffer = getBuffer("camera");
-        if (camBuffer) {
-            getQueue().writeBuffer(camBuffer, 0, this.simpleOrbitCam.shaderData);
-        }
+        getQueue().writeBuffer(camBuffer!, 0, this.simpleOrbitCam.shaderData);
 
         // Render meshes
         for (let i = 0; i < this.meshEntityList.length; i++) {
@@ -117,11 +104,8 @@ export class WebGPURenderer {
 
             pass.setPipeline(pipe);
 
-            meshEntity.transform.calculateMVPMatrix(
-                viewMatrix,
-                projectionMatrix
-            );
-            
+            meshEntity.transform.calculateMVPMatrix(viewMatrix, projectionMatrix);
+
             const mvpBindGroup = meshEntity.mvpBindGroup;
             const lightsBindGroup = mesh.material.getLightsBindGroup;
             const matBindGroup = mesh.material.getMaterialBindGroup;
@@ -151,12 +135,12 @@ export class WebGPURenderer {
     public addEntity(entity: Entity) {
         if (entity instanceof MeshEntity) {
             this.meshEntityList.push(entity);
-            const offset = (this.meshEntityList.length - 1) * 256;
+            const offset = (this.meshEntityList.length - 1) * 256; // Todo refactor the naive approach that all entites are stacked nicely
             entity.generateMVPBindGroup(offset);
         } else if (entity instanceof LightEntity) {
             this.lightEntityList.push(entity);
         } else {
             this.entityList.push(entity);
-        } 
+        }
     }
 }

@@ -3,12 +3,8 @@ import { loadImageBitmap } from "./util";
 import { getDevice } from "./global-resources";
 import { vec3 } from "wgpu-matrix";
 
-// Lit shader
-import litMaterialVertex from "./shaders/lit_vert.wgsl?raw";
+import coreVertex from "./shaders/base/core_vert.wgsl?raw";
 import litMaterialFragment from "./shaders/lit_frag.wgsl?raw";
-
-// Unlit shader
-import unlitMaterialVertex from "./shaders/base/core_vert.wgsl?raw";
 import unlitMaterialFragment from "./shaders/unlit_frag.wgsl?raw";
 
 export const createLitMaterial = async (): Promise<Material> => {
@@ -36,7 +32,7 @@ export const createLitMaterial = async (): Promise<Material> => {
 
     return new Material(
         litProperties,
-        litMaterialVertex,
+        coreVertex,
         litMaterialFragment
     );
 };
@@ -64,7 +60,7 @@ export const createUnlitMaterial = async (): Promise<Material> => {
 
     return new Material(
         unlitProperties,
-        unlitMaterialVertex,
+        coreVertex,
         unlitMaterialFragment
     );
 };

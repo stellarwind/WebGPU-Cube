@@ -15,7 +15,6 @@ const run = async () => {
     const cubeMesh = generateCube();
     const cubeEntity = new MeshEntity(cubeMesh);
     cubeMesh.material = await createUnlitMaterial();
-    // cubeMesh.material.setTexture("albedo", "./test.jpg");
     cubeEntity.transform.translate(3.5, 0, 1);
     renderer.addEntity(cubeEntity);
 
@@ -26,7 +25,6 @@ const run = async () => {
     mesh.material = await createLitMaterial();
     await mesh.material.setTexture("albedo", "./mesh/octo.png");
     gltfEntity2.transform.setScale(3, 3, 3);
-    gltfEntity2.transform.translate(0, 0, 0);
     renderer.addEntity(gltfEntity2);
 
     const dirLight = new LightEntity({

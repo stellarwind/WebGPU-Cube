@@ -1,6 +1,6 @@
 import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
-import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
+import { Vec2, Vec3, Vec4 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
 import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform } from "./shader-resources";
 
