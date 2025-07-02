@@ -1,17 +1,15 @@
-import vertexShaderCode from "./shaders/lit_vert.wgsl?raw";
-import unlitFragmentShaderCode from "./shaders/lit_frag.wgsl?raw";
 import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4, vec3 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
 import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform } from "./shader-resources";
 
-interface ShaderProperties {
+export interface ShaderProperties {
     textures: Record<string, TextureDef>;
     scalars: Record<string, number | Vec2 | Vec3 | Vec4>;
 }
 
-interface TextureDef {
+export interface TextureDef {
     image: ImageBitmap;
     textureHandle: GPUTexture;
     uri: String;
@@ -281,32 +279,3 @@ export class Material {
     }
 }
 
-export const createLitMaterial = async (): Promise<Material> => {
-    const img = await loadImageBitmap("uv1.png");
-    const texture = getDevice().createTexture({
-        size: [img.width, img.height],
-        format: "rgba8unorm",
-        usage:
-            GPUTextureUsage.TEXTURE_BINDING |
-            GPUTextureUsage.COPY_DST |
-            GPUTextureUsage.RENDER_ATTACHMENT,
-    });
-    const unlitProperties: ShaderProperties = {
-        textures: {
-            albedo: {
-                image: img,
-                uri: "uv1.png",
-                textureHandle: texture,
-            },
-        },
-        scalars: {
-            baseColor: vec3.fromValues(1, 1, 1),
-        },
-    };
-
-    return new Material(
-        unlitProperties,
-        vertexShaderCode,
-        unlitFragmentShaderCode
-    );
-};

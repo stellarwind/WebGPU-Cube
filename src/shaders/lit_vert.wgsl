@@ -15,7 +15,7 @@ fn main_vert(@location(0) inPos: vec4f,
 
     var col: vec4f;
     vsOut.uv = inUV;
-    vsOut.Position =  matrices.mvpMatrix * inPos;
+    vsOut.Position = matrices.mvpMatrix * inPos;
     vsOut.color = col.xyz;
     vsOut.outNrm = inNrm;
     vsOut.worldPos = (matrices.modelMatrix * inPos).xyz;
