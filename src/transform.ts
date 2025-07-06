@@ -1,4 +1,4 @@
-import { mat4, Mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
+import { mat3, mat4, Mat4, quat, utils, vec3, Vec3 } from "wgpu-matrix";
 
 export class Transform {
     private position_ = vec3.fromValues(0, 0, 0);
@@ -62,6 +62,12 @@ export class Transform {
 
     public get modelMatrix(): Mat4 {
         return this.modelMatrix_;
+    }
+
+    public get normalMatrix(): Mat4 {
+        const upper = mat3.fromMat4(this.modelMatrix_);
+        const normalMatrix = mat3.transpose(mat3.invert(upper));
+        return mat4.fromMat3(normalMatrix);
     }
 
     public calculateMVPMatrix(viewMatrix: Mat4, projectionMatrix: Mat4): Mat4 {

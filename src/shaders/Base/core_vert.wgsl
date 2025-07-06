@@ -17,7 +17,7 @@ fn main_vert(@location(0) inPos: vec4f,
     vsOut.uv = inUV;
     vsOut.Position = matrices.mvpMatrix * inPos;
     vsOut.color = col.xyz;
-    vsOut.outNrm = inNrm;
+    vsOut.outNrm = normalize(matrices.normalMatrix * vec4f(inNrm, 0.0)).xyz;
     vsOut.worldPos = (matrices.modelMatrix * inPos).xyz;
     return vsOut;
 }

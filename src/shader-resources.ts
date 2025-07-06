@@ -31,7 +31,8 @@ export const globalUniform: BindingGroupResource = {
     wgsl: `
         struct Uniforms {
             mvpMatrix: mat4x4f,
-            modelMatrix: mat4x4f
+            modelMatrix: mat4x4f,
+            normalMatrix: mat4x4f
         }
         @group(0) @binding(0) var<uniform> matrices: Uniforms;
     `

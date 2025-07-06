@@ -32,7 +32,7 @@ export class MeshEntity extends Entity {
                         resource: {
                             buffer: mvpBuffer,
                             offset: offset,
-                            size: 4 * 16 * 2, // todo standardize sizes somewhere
+                            size: 4 * 16 * 3, // todo standardize sizes somewhere
                         },
                     },
                 ],
@@ -46,6 +46,6 @@ export class MeshEntity extends Entity {
     }
 
     public get shaderData(): Float32Array {
-        return Float32Array.of(...this.transform.mvpMatrix, ...this.transform.modelMatrix);
+        return Float32Array.of(...this.transform.mvpMatrix, ...this.transform.modelMatrix, ...this.transform.normalMatrix);
     }
 }
