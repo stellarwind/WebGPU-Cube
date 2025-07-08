@@ -3,10 +3,11 @@ import { getDevice, primitive, depthStencil } from "./global-resources";
 import { Vec2, Vec3, Vec4 } from "wgpu-matrix";
 import { loadImageBitmap } from "./util";
 import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform } from "./shader-resources";
+import { ScalarType, ScalarValue } from "./scalar";
 
 export interface ShaderProperties {
-    textures: Record<string, TextureDef>;
-    scalars: Record<string, number | Vec2 | Vec3 | Vec4>;
+    textures: Record<string, TextureDef> | undefined;
+    scalars: Record<string, ScalarValue> | undefined;
 }
 
 export interface TextureDef {
@@ -124,6 +125,8 @@ export class Material {
     };
 
     async setTexture(propertyName: string, value: string) {
+        if (!this.properties.textures) return;
+
         const img = await loadImageBitmap(value);
         const texture = getDevice().createTexture({
             size: [img.width, img.height],
@@ -169,33 +172,44 @@ export class Material {
     }
 
     async generateMaterialBindGroup() {
-        Object.entries(this.properties.textures).forEach(([_, texturedef]) => {
-            const texture = texturedef;
+        // Generate scalar binds
+        // if (Object.keys(this.properties.scalars).length > 0) {
+        //     Object.entries(this.properties.scalars.entries).forEach(([_, scalar]) => {
 
-            getDevice().queue.copyExternalImageToTexture(
-                { source: texture.image },
-                { texture: texture.textureHandle },
-                [texture.image.width, texture.image.height]
-            );
-            const texView = texture.textureHandle.createView();
-            const sampler = getDevice().createSampler({
-                magFilter: "linear",
-                minFilter: "linear",
+        //     })
+        // }
+        // Generate texture binds
+        if (this.properties.textures != undefined) {
+            Object.entries(this.properties.textures).forEach(([_, texturedef]) => {
+                const texture = texturedef;
+    
+                getDevice().queue.copyExternalImageToTexture(
+                    { source: texture.image },
+                    { texture: texture.textureHandle },
+                    [texture.image.width, texture.image.height]
+                );
+                const texView = texture.textureHandle.createView();
+                const sampler = getDevice().createSampler({
+                    magFilter: "linear",
+                    minFilter: "linear",
+                });
+                this.materialBindGroup = getDevice().createBindGroup({
+                    layout: this.pipeline.getBindGroupLayout(2),
+                    entries: [
+                        {
+                            binding: 0,
+                            resource: sampler,
+                        },
+                        {
+                            binding: 1,
+                            resource: texView,
+                        },
+                    ],
+                });
             });
-            this.materialBindGroup = getDevice().createBindGroup({
-                layout: this.pipeline.getBindGroupLayout(2),
-                entries: [
-                    {
-                        binding: 0,
-                        resource: sampler,
-                    },
-                    {
-                        binding: 1,
-                        resource: texView,
-                    },
-                ],
-            });
-        });
+
+
+        }
     }
 
     generatePipeline() {

@@ -1,11 +1,16 @@
-export type Scalar = "bool" | "f32" | "i32" | "vec2" | "vec3" | "vec4";
+export type ScalarType = "bool" | "f32" | "i32" | "vec2" | "vec3" | "vec4";
+
+export type ScalarValue = {
+    type: ScalarType,
+    value: number | Float32Array
+}
 
 export type ScalarMemoryLayout = {
     size: number,
     alignment: number,
 }
 
-export const scalarLayout: Record<Scalar, ScalarMemoryLayout> = {
+export const scalarLayout: Record<ScalarType, ScalarMemoryLayout> = {
     bool: { size: 4, alignment: 4 },
     f32: { size: 4, alignment: 4 },
     i32: { size: 4, alignment: 4 },

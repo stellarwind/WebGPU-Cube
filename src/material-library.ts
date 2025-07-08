@@ -26,7 +26,7 @@ export const createLitMaterial = async (): Promise<Material> => {
             },
         },
         scalars: {
-            baseColor: vec3.fromValues(1, 1, 1),
+            baseColor: { value: vec3.fromValues(1, 1, 1), type: "vec3" },
         },
     };
 
@@ -55,7 +55,7 @@ export const createUnlitMaterial = async (): Promise<Material> => {
                 textureHandle: texture,
             },
         },
-        scalars: { },
+        scalars: undefined,
     };
 
     return new Material(
