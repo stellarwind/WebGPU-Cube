@@ -189,7 +189,7 @@ export class Material {
             let offset = 0;
 
             this.properties.scalars.forEach((scalar) => {
-                const final = index + 1 == this.properties.scalars?.length? true : false;
+                const final = index + 1 == this.properties.scalars?.length ? true : false;
                 const alignment = scalarMemoryLayout[scalar.type].alignment;
                 const aligned = offset % alignment == 0;
                 const nextAligned = alignByteOffset(offset, alignment);
@@ -197,29 +197,32 @@ export class Material {
                 if (!aligned) {
                     const padCount = (nextAligned - offset) / 4;
 
-                    for (let i = 0; i < padCount - 1; i++) {
+                    for (let i = 0; i < padCount; i++) {
                         scalarData.push(0); // Add pads to reach the alignment
                         offset += 4;
                     }
                 }
                 scalarData.push(...scalar.value);
-                scalarShaderBinding += `${scalar.name} : ${scalar.type} \n`
-                
+
+                if (scalar.type == "vec3f") {
+                    scalarData.push(0);
+                    offset += 4;
+                } // Padding vec3f to vec4f. Todo smartly check if next scalar is already 4 bytes
+
+                scalarShaderBinding += `${scalar.name} : ${scalar.type} \n`;
+
                 offset += scalarMemoryLayout[scalar.type].size;
                 index++;
 
                 if (final) {
                     const finalPad = (alignByteOffset(offset, 16) - offset) / 4;
-                    for (let i = 0; i < finalPad - 1; i++) {
+                    for (let i = 0; i < finalPad; i++) {
                         scalarData.push(0); // Final padding so whole uniform buffer is aligned to 16 bytes
                     }
                 }
             });
 
             const compiledScalarBinding = scalarsUniform.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderBinding);
-
-            console.log(compiledScalarBinding);
-
         }
 
         // Generate texture binds
