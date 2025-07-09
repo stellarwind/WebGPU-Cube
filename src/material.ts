@@ -1,13 +1,12 @@
 import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
-import { Vec2, Vec3, Vec4 } from "wgpu-matrix";
-import { loadImageBitmap } from "./util";
-import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform } from "./shader-resources";
-import { ScalarType, ScalarValue } from "./scalar";
+import { alignByteOffset, loadImageBitmap } from "./util";
+import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform, scalarsUniform } from "./shader-resources";
+import { Scalar, scalarMemoryLayout } from "./scalar";
 
 export interface ShaderProperties {
     textures: Record<string, TextureDef> | undefined;
-    scalars: Record<string, ScalarValue> | undefined;
+    scalars: Scalar[] | undefined;
 }
 
 export interface TextureDef {
@@ -29,7 +28,7 @@ export class Material {
     private fragmentCode: string = "";
 
     public readonly properties: ShaderProperties;
-    
+
     private lightsBindGroup!: GPUBindGroup;
 
     get getLightsBindGroup() {
@@ -172,14 +171,59 @@ export class Material {
     }
 
     async generateMaterialBindGroup() {
-        // Generate scalar binds
-        // if (Object.keys(this.properties.scalars).length > 0) {
-        //     Object.entries(this.properties.scalars.entries).forEach(([_, scalar]) => {
+        
+        if (this.properties.scalars !== undefined) {
+            
+            // Generate scalar binds
+            const scalarData: number[] = [];
+            let scalarShaderBinding: string = "";
 
-        //     })
-        // }
+            // Sorting the array of scalars by their size to avoid extra padding
+            this.properties.scalars.sort((scalarA, scalarB): number => {
+                if (scalarMemoryLayout[scalarA.type].size < scalarMemoryLayout[scalarB.type].size) return 1;
+                if (scalarMemoryLayout[scalarA.type].size > scalarMemoryLayout[scalarB.type].size) return -1;
+                return 0;
+            });
+
+            let index = 0;
+            let offset = 0;
+
+            this.properties.scalars.forEach((scalar) => {
+                const final = index + 1 == this.properties.scalars?.length? true : false;
+                const alignment = scalarMemoryLayout[scalar.type].alignment;
+                const aligned = offset % alignment == 0;
+                const nextAligned = alignByteOffset(offset, alignment);
+
+                if (!aligned) {
+                    const padCount = (nextAligned - offset) / 4;
+
+                    for (let i = 0; i < padCount - 1; i++) {
+                        scalarData.push(0); // Add pads to reach the alignment
+                        offset += 4;
+                    }
+                }
+                scalarData.push(...scalar.value);
+                scalarShaderBinding += `${scalar.name} : ${scalar.type} \n`
+                
+                offset += scalarMemoryLayout[scalar.type].size;
+                index++;
+
+                if (final) {
+                    const finalPad = (alignByteOffset(offset, 16) - offset) / 4;
+                    for (let i = 0; i < finalPad - 1; i++) {
+                        scalarData.push(0); // Final padding so whole uniform buffer is aligned to 16 bytes
+                    }
+                }
+            });
+
+            const compiledScalarBinding = scalarsUniform.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderBinding);
+
+            console.log(compiledScalarBinding);
+
+        }
+
         // Generate texture binds
-        if (this.properties.textures != undefined) {
+        if (this.properties.textures !== undefined) {
             Object.entries(this.properties.textures).forEach(([_, texturedef]) => {
                 const texture = texturedef;
     
@@ -197,18 +241,16 @@ export class Material {
                     layout: this.pipeline.getBindGroupLayout(2),
                     entries: [
                         {
-                            binding: 0,
+                            binding: 1,
                             resource: sampler,
                         },
                         {
-                            binding: 1,
+                            binding: 2,
                             resource: texView,
                         },
                     ],
                 });
             });
-
-
         }
     }
 
@@ -241,12 +283,12 @@ export class Material {
         const materialBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
                 {
-                    binding: 0,
+                    binding: 1,
                     visibility: GPUShaderStage.FRAGMENT,
                     sampler: { type: "filtering" },
                 },
                 {
-                    binding: 1,
+                    binding: 2,
                     visibility: GPUShaderStage.FRAGMENT,
                     texture: { sampleType: "float" },
                 },
