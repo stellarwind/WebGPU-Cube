@@ -5,14 +5,15 @@ import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUnifo
 import { Scalar, scalarMemoryLayout } from "./scalar";
 
 export interface ShaderProperties {
-    textures: Record<string, TextureDef> | undefined;
-    scalars: Scalar[] | undefined;
+    textures: TextureDef[] | undefined;
+    scalars: Scalar[] | undefined,
 }
 
 export interface TextureDef {
-    image: ImageBitmap;
-    textureHandle: GPUTexture;
-    uri: String;
+    name: String,
+    image: ImageBitmap,
+    textureHandle: GPUTexture,
+    uri: String,
 }
 
 export class Material {
@@ -30,12 +31,21 @@ export class Material {
     public readonly properties: ShaderProperties;
 
     private lightsBindGroup!: GPUBindGroup;
+    private lightsBindGroupLayout!: GPUBindGroupLayout;
 
     get getLightsBindGroup() {
         return this.lightsBindGroup;
     }
 
     private materialBindGroup!: GPUBindGroup;
+
+    private scalarBindingShaderChunk: string = "";
+
+    private materialBindGroupEntries: GPUBindGroupEntry[] = [];
+    private materialBindGrouplayoutEntries: GPUBindGroupLayoutEntry[] = [];
+    private materialBindGroupLayout!: GPUBindGroupLayout;
+
+    private scalarBuffer!: GPUBuffer;
 
     get getMaterialBindGroup() {
         return this.materialBindGroup;
@@ -53,12 +63,14 @@ export class Material {
         this.fragmentCode = frag;
         this.vertexCode = vert;
 
+        this.generateLightsBindGroup();
+
+
+        this.generateTextureEntries();
+        
         this.compileShader();
 
         this.generatePipeline();
-
-        this.generateCommonBindGroup();
-        this.generateMaterialBindGroup();
     }
 
     generateStates = (): [GPUVertexState, GPUFragmentState] => {
@@ -130,29 +142,46 @@ export class Material {
         const texture = getDevice().createTexture({
             size: [img.width, img.height],
             format: "rgba8unorm",
-            usage:
-                GPUTextureUsage.TEXTURE_BINDING |
-                GPUTextureUsage.COPY_DST |
-                GPUTextureUsage.RENDER_ATTACHMENT,
+            usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
         });
 
-        this.properties.textures[propertyName] = {
-            image: img,
-            textureHandle: texture,
-            uri: value,
-        };
+        const index = this.properties.textures?.findIndex((t) => t.name === propertyName);
 
-        this.generateMaterialBindGroup();
-        img.close();
+        if (index !== undefined && index !== -1) {
+            const newTexture: TextureDef = {
+                name: propertyName,
+                image: img,
+                textureHandle: texture,
+                uri: value,
+            };
+            this.properties.textures![index] = newTexture;
+            this.generateTextureEntries();
+            img.close();
+        }
     }
 
-    async generateCommonBindGroup() {
+    async generateLightsBindGroup() {
         const camBuffer = getBuffer("camera");
         const dirlightBuffer = getBuffer("dirLight");
         
         if (camBuffer && dirlightBuffer) {
+            this.lightsBindGroupLayout = getDevice().createBindGroupLayout({
+                entries: [
+                    {
+                        binding: 0,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        buffer: { type: "uniform" },
+                    },
+                    {
+                        binding: 1,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        buffer: { type: "uniform" },
+                    },
+                ],
+            });
+
             this.lightsBindGroup = getDevice().createBindGroup({
-                layout: this.pipeline.getBindGroupLayout(1),
+                layout: this.lightsBindGroupLayout,
                 entries: [
                     {
                         binding: 0,
@@ -170,13 +199,18 @@ export class Material {
 
     }
 
-    async generateMaterialBindGroup() {
-        
+    async generateScalarEntries() {
+        this.materialBindGrouplayoutEntries.push({
+            binding: 0,
+            visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+            buffer: {
+                type: "uniform",
+            },
+        });
+
         if (this.properties.scalars !== undefined) {
-            
-            // Generate scalar binds
             const scalarData: number[] = [];
-            let scalarShaderBinding: string = "";
+            let scalarShaderStruct: string = "";
 
             // Sorting the array of scalars by their size to avoid extra padding
             this.properties.scalars.sort((scalarA, scalarB): number => {
@@ -209,7 +243,7 @@ export class Material {
                     offset += 4;
                 } // Padding vec3f to vec4f. Todo smartly check if next scalar is already 4 bytes
 
-                scalarShaderBinding += `${scalar.name} : ${scalar.type} \n`;
+                scalarShaderStruct += `${scalar.name} : ${scalar.type} \n`;
 
                 offset += scalarMemoryLayout[scalar.type].size;
                 index++;
@@ -222,68 +256,32 @@ export class Material {
                 }
             });
 
-            const compiledScalarBinding = scalarsUniform.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderBinding);
-        }
+            const scalarDataRaw = new Float32Array(scalarData); 
+            const scalarByteLength = scalarData.length * 4;
 
-        // Generate texture binds
-        if (this.properties.textures !== undefined) {
-            Object.entries(this.properties.textures).forEach(([_, texturedef]) => {
-                const texture = texturedef;
-    
-                getDevice().queue.copyExternalImageToTexture(
-                    { source: texture.image },
-                    { texture: texture.textureHandle },
-                    [texture.image.width, texture.image.height]
-                );
-                const texView = texture.textureHandle.createView();
-                const sampler = getDevice().createSampler({
-                    magFilter: "linear",
-                    minFilter: "linear",
-                });
-                this.materialBindGroup = getDevice().createBindGroup({
-                    layout: this.pipeline.getBindGroupLayout(2),
-                    entries: [
-                        {
-                            binding: 1,
-                            resource: sampler,
-                        },
-                        {
-                            binding: 2,
-                            resource: texView,
-                        },
-                    ],
-                });
+            this.scalarBuffer = getDevice().createBuffer({
+                size: scalarByteLength,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            });
+
+            getDevice().queue.writeBuffer(
+                this.scalarBuffer,
+                0,
+                scalarDataRaw.buffer,
+            );
+            this.scalarBindingShaderChunk = scalarsUniform.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderStruct);
+
+            this.materialBindGroupEntries.push({
+                binding: 0,
+                resource: {
+                    buffer: this.scalarBuffer,
+                },
             });
         }
     }
 
-    generatePipeline() {
-        const matricesBindGroupLayout = getDevice().createBindGroupLayout({
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: { type: "uniform" },
-                },
-            ],
-        });
-
-        const lightsBindGroupLayout = getDevice().createBindGroupLayout({
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: { type: "uniform" },
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    buffer: { type: "uniform" }
-                }
-            ],
-        });
-
-        const materialBindGroupLayout = getDevice().createBindGroupLayout({
+    async generateTextureEntries() { 
+         this.materialBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
                 {
                     binding: 1,
@@ -298,10 +296,57 @@ export class Material {
             ],
         });
 
+        if (this.properties.textures !== undefined) {
+            for (let i = 0; i < this.properties.textures.length; i++) {
+                const texture = this.properties.textures[i];
+    
+                getDevice().queue.copyExternalImageToTexture(
+                    { source: texture.image },
+                    { texture: texture.textureHandle },
+                    [texture.image.width, texture.image.height]
+                );
+                const texView = texture.textureHandle.createView();
+                const sampler = getDevice().createSampler({
+                    magFilter: "linear",
+                    minFilter: "linear",
+                });
+
+
+                this.materialBindGroup = getDevice().createBindGroup({
+                    layout: this.materialBindGroupLayout,
+                    entries: [
+                        {
+                            binding: 1,
+                            resource: sampler,
+                        },
+                        {
+                            binding: 2,
+                            resource: texView,
+                        },
+                    ],
+                });
+            }
+        }
+
+      
+    }
+
+    generatePipeline() {
+        // TODO Doesn't make sense to it keep here
+        const matricesBindGroupLayout = getDevice().createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: { type: "uniform" },
+                },
+            ],
+        });
+
         const [vertex, fragment] = this.generateStates();
 
         const pipelineLayout = getDevice().createPipelineLayout({
-            bindGroupLayouts: [matricesBindGroupLayout, lightsBindGroupLayout, materialBindGroupLayout],
+            bindGroupLayouts: [matricesBindGroupLayout, this.lightsBindGroupLayout, this.materialBindGroupLayout],
         });
 
         const pipelineDesc: GPURenderPipelineDescriptor = {
@@ -320,6 +365,7 @@ export class Material {
         ${globalUniform.wgsl}
         ${dirLightUniform.wgsl}
         ${cameraUniform.wgsl}
+
         ${albedoBindGroup.wgsl}
 
         ${commonShaderHeader}

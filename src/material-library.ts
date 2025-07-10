@@ -19,14 +19,15 @@ export const createLitMaterial = async (): Promise<Material> => {
             GPUTextureUsage.RENDER_ATTACHMENT,
     });
     const litProperties: ShaderProperties = {
-        textures: {
-            albedo: {
+        textures: [
+            {
+                name: "albedo",
                 image: img,
                 uri: "uv1.png",
                 textureHandle: texture,
             },
-        },
-        scalars: undefined
+        ],
+        scalars: [...exampleScalars],
     };
 
     return new Material(
@@ -47,13 +48,14 @@ export const createUnlitMaterial = async (): Promise<Material> => {
             GPUTextureUsage.RENDER_ATTACHMENT,
     });
     const unlitProperties: ShaderProperties = {
-        textures: {
-            albedo: {
+        textures: [
+            {
+                name: "albedo",
                 image: img,
                 uri: "uv1.png",
                 textureHandle: texture,
             },
-        },
+        ],
         scalars: [...exampleScalars],
     };
 
