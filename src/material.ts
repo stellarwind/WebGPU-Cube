@@ -65,7 +65,6 @@ export class Material {
 
         this.generateLightsBindGroup();
 
-
         this.generateTextureEntries();
         
         this.compileShader();
@@ -155,7 +154,17 @@ export class Material {
                 uri: value,
             };
             this.properties.textures![index] = newTexture;
+
+            this.materialBindGroupEntries = this.materialBindGroupEntries.filter(entry => entry.binding === 0);
+            this.materialBindGrouplayoutEntries = this.materialBindGrouplayoutEntries.filter(entry => entry.binding === 0);
+
             this.generateTextureEntries();
+             
+            this.materialBindGroup = getDevice().createBindGroup({
+                layout: this.materialBindGroupLayout,
+                entries: this.materialBindGroupEntries,
+            });
+
             img.close();
         }
     }
@@ -281,21 +290,6 @@ export class Material {
     }
 
     async generateTextureEntries() { 
-         this.materialBindGroupLayout = getDevice().createBindGroupLayout({
-            entries: [
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: { type: "filtering" },
-                },
-                {
-                    binding: 2,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: { sampleType: "float" },
-                },
-            ],
-        });
-
         if (this.properties.textures !== undefined) {
             for (let i = 0; i < this.properties.textures.length; i++) {
                 const texture = this.properties.textures[i];
@@ -311,28 +305,34 @@ export class Material {
                     minFilter: "linear",
                 });
 
+                this.materialBindGrouplayoutEntries.push(
+                    {
+                        binding: i + 1,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        sampler: { type: "filtering" },
+                    },
+                    {
+                        binding: i + 2,
+                        visibility: GPUShaderStage.FRAGMENT,
+                        texture: { sampleType: "float" },
+                    }
+                );
 
-                this.materialBindGroup = getDevice().createBindGroup({
-                    layout: this.materialBindGroupLayout,
-                    entries: [
-                        {
-                            binding: 1,
-                            resource: sampler,
-                        },
-                        {
-                            binding: 2,
-                            resource: texView,
-                        },
-                    ],
-                });
+                this.materialBindGroupEntries.push(
+                    {
+                        binding: i + 1,
+                        resource: sampler,
+                    },
+                    {
+                        binding: i + 2,
+                        resource: texView,
+                    }
+                );
             }
         }
-
-      
     }
-
+    
     generatePipeline() {
-        // TODO Doesn't make sense to it keep here
         const matricesBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
                 {
@@ -341,6 +341,15 @@ export class Material {
                     buffer: { type: "uniform" },
                 },
             ],
+        });
+        
+        this.materialBindGroupLayout = getDevice().createBindGroupLayout({
+            entries: this.materialBindGrouplayoutEntries
+        });
+
+        this.materialBindGroup = getDevice().createBindGroup({
+            layout: this.materialBindGroupLayout,
+            entries: this.materialBindGroupEntries
         });
 
         const [vertex, fragment] = this.generateStates();

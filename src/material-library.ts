@@ -6,7 +6,7 @@ import coreVertex from "./shaders/base/core_vert.wgsl?raw";
 import litMaterialFragment from "./shaders/lit_frag.wgsl?raw";
 import unlitMaterialFragment from "./shaders/unlit_frag.wgsl?raw";
 import { Scalar } from "./scalar";
-import { vec3, vec4 } from "wgpu-matrix";
+import { vec4 } from "wgpu-matrix";
 
 export const createLitMaterial = async (): Promise<Material> => {
     const img = await loadImageBitmap("uv1.png");
