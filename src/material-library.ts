@@ -76,7 +76,7 @@ export const exampleScalars: Scalar[] = [
         value: new Float32Array([6.66]),
     },
     {
-        name: "Vec4_scalar",
+        name: "Vec4 scalar",
         type: "vec4f",
         value: vec4.create(Math.random(), Math.random(), Math.random(), 1.0),
     },
@@ -86,12 +86,12 @@ export const exampleScalars: Scalar[] = [
         value: new Float32Array([1666]),
     },
     {
-        name: "Vec3_scalar",
+        name: "Vec3 scalar",
         type: "vec3f",
         value: new Float32Array([Math.random() * 10, Math.random() * 10, Math.random() * 10]),
     },
     {
-        name: "Vec2_scalar",
+        name: "Vec2 scalar",
         type: "vec2f",
         value: new Float32Array([1920, 1080]),
     },

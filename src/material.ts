@@ -65,6 +65,7 @@ export class Material {
 
         this.generateLightsBindGroup();
 
+        this.generateScalarEntries(); 
         this.generateTextureEntries();
         
         this.compileShader();
@@ -210,7 +211,7 @@ export class Material {
 
     async generateScalarEntries() {
         this.materialBindGrouplayoutEntries.push({
-            binding: 0,
+            binding: 0, // Scalar buffer always at 0
             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
             buffer: {
                 type: "uniform",
@@ -252,7 +253,7 @@ export class Material {
                     offset += 4;
                 } // Padding vec3f to vec4f. Todo smartly check if next scalar is already 4 bytes
 
-                scalarShaderStruct += `${scalar.name} : ${scalar.type} \n`;
+                scalarShaderStruct += `${scalar.name.trim().replace(/\s/g, "_")} : ${scalar.type} , \n`;
 
                 offset += scalarMemoryLayout[scalar.type].size;
                 index++;
@@ -370,10 +371,15 @@ export class Material {
     }
 
     compileShader() {
+        const scalarChunk = this.properties.scalars !== undefined ? this.scalarBindingShaderChunk : "";
+
+
         const shaderSource = `
         ${globalUniform.wgsl}
         ${dirLightUniform.wgsl}
         ${cameraUniform.wgsl}
+
+        ${scalarChunk}
 
         ${albedoBindGroup.wgsl}
 
