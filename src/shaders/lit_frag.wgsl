@@ -14,7 +14,7 @@ fn main_frag(
 
         let specular: f32 = computeSpecular(viewDir, fragNrm, dirLight.forward, 16);
 
-        finalColor = textureSample(albedo, albedoSampler, uv) * vec4f(diffuse + ambient, 1) + specular;
+        finalColor = textureSample(albedo, albedo_sampler, uv) * vec4f(diffuse + ambient, 1) + specular;
 
         return finalColor;
 }

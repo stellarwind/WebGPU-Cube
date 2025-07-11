@@ -1,7 +1,7 @@
 import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { alignByteOffset, loadImageBitmap } from "./util";
-import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform, scalarsUniform } from "./shader-resources";
+import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform, scalarsUniformTemplate, textureBindGroupTemplate } from "./shader-resources";
 import { Scalar, scalarMemoryLayout } from "./scalar";
 
 export interface ShaderProperties {
@@ -39,6 +39,7 @@ export class Material {
 
     private materialBindGroup!: GPUBindGroup;
 
+    private textureBindingShaderChunk: string = "";
     private scalarBindingShaderChunk: string = "";
 
     private materialBindGroupEntries: GPUBindGroupEntry[] = [];
@@ -279,7 +280,7 @@ export class Material {
                 0,
                 scalarDataRaw.buffer,
             );
-            this.scalarBindingShaderChunk = scalarsUniform.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderStruct);
+            this.scalarBindingShaderChunk = scalarsUniformTemplate.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderStruct);
 
             this.materialBindGroupEntries.push({
                 binding: 0,
@@ -305,29 +306,41 @@ export class Material {
                     magFilter: "linear",
                     minFilter: "linear",
                 });
+                const textureIndex = i + 1;
+                const samplerIndex = i + 2;
+                const textureName = texture.name.trim().replace(/\s/g, "_");
+                const samplerName = textureName + "_sampler";
+
+                let chunk = textureBindGroupTemplate.wgsl
+                .replace("{{TEXTURE_INDEX}}", textureIndex.toString())
+                .replace("{{SAMPLER_INDEX}}", samplerIndex.toString())
+                .replace("{{TEXTURE_NAME}}", textureName)
+                .replace("{{SAMPLER_NAME}}", samplerName);
+
+                this.textureBindingShaderChunk += chunk + "\n";
 
                 this.materialBindGrouplayoutEntries.push(
                     {
                         binding: i + 1,
                         visibility: GPUShaderStage.FRAGMENT,
-                        sampler: { type: "filtering" },
+                        texture: { sampleType: "float" },
                     },
                     {
                         binding: i + 2,
                         visibility: GPUShaderStage.FRAGMENT,
-                        texture: { sampleType: "float" },
-                    }
+                        sampler: { type: "filtering" },
+                    },
                 );
 
                 this.materialBindGroupEntries.push(
                     {
                         binding: i + 1,
-                        resource: sampler,
+                        resource: texView,
                     },
                     {
                         binding: i + 2,
-                        resource: texView,
-                    }
+                        resource: sampler,
+                    },
                 );
             }
         }
@@ -371,17 +384,17 @@ export class Material {
     }
 
     compileShader() {
-        const scalarChunk = this.properties.scalars !== undefined ? this.scalarBindingShaderChunk : "";
-
+        const scalarsChunk = this.properties.scalars !== undefined ? this.scalarBindingShaderChunk : "";
+        const texturesChunk = this.properties.textures !== undefined ? this.textureBindingShaderChunk : "";
 
         const shaderSource = `
         ${globalUniform.wgsl}
         ${dirLightUniform.wgsl}
         ${cameraUniform.wgsl}
 
-        ${scalarChunk}
+        ${scalarsChunk}
 
-        ${albedoBindGroup.wgsl}
+        ${texturesChunk}
 
         ${commonShaderHeader}
 

@@ -8,7 +8,7 @@ fn main_frag(
     ) -> @location(0) vec4f {
         var finalColor: vec4f;
 
-        finalColor = textureSample(albedo, albedoSampler, uv);
+        finalColor = textureSample(albedo, albedo_sampler, uv);
 
         return finalColor;
 }

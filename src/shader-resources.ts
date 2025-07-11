@@ -62,8 +62,8 @@ export const cameraUniform: BindingGroupResource = {
     `
 };
 
-export const scalarsUniform: BindingGroupResource = {
-    name: "Scalars",
+export const scalarsUniformTemplate: BindingGroupResource = {
+    name: "Scalars Uniform Template",
     wgsl: `
         struct Scalars {
             {{SCALAR_BLOCK}}
@@ -72,13 +72,14 @@ export const scalarsUniform: BindingGroupResource = {
     `
 };
 
-export const albedoBindGroup: BindingGroupResource = {
-    name: "Albedo Texture Sampler",
+export const textureBindGroupTemplate: BindingGroupResource = {
+    name: "Texture Binding Group Template",
     wgsl: `
-        @group(2) @binding(1) var albedoSampler: sampler;
-        @group(2) @binding(2) var albedo: texture_2d<f32>;
+        @group(2) @binding({{TEXTURE_INDEX}}) var {{TEXTURE_NAME}}: texture_2d<f32>;
+        @group(2) @binding({{SAMPLER_INDEX}}) var {{SAMPLER_NAME}}: sampler;
     `
 };
+
 
 
 
