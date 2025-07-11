@@ -239,6 +239,7 @@ export class Material {
                     }
                 }
                 scalarData.push(...scalar.value);
+                scalar.bufferOffset = offset;
 
                 if (scalar.type == "vec3f") {
                     scalarData.push(0);
@@ -251,7 +252,6 @@ export class Material {
                 index++;
 
                 // Keep each offset on metadata
-                scalar.bufferOffset = offset;
 
                 if (final) {
                     const finalPad = (alignByteOffset(offset, 16) - offset) / 4;
