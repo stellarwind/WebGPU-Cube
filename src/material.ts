@@ -1,7 +1,7 @@
 import commonShaderHeader from "./shaders/common.wgsl?raw"
 import { getDevice, primitive, depthStencil } from "./global-resources";
 import { alignByteOffset, loadImageBitmap } from "./util";
-import { albedoBindGroup, cameraUniform, dirLightUniform, getBuffer, globalUniform, scalarsUniformTemplate, textureBindGroupTemplate } from "./shader-resources";
+import { cameraUniform, dirLightUniform, getBuffer, globalUniform, scalarsUniformTemplate, textureBindGroupTemplate } from "./shader-resources";
 import { Scalar, scalarMemoryLayout } from "./scalar";
 
 export interface ShaderProperties {
@@ -53,10 +53,7 @@ export class Material {
     }
 
     get ready() {
-        return (
-            this.lightsBindGroup != undefined &&
-            this.materialBindGroup != undefined
-        );
+        return this.lightsBindGroup != undefined && this.materialBindGroup != undefined;
     }
 
     constructor(props: ShaderProperties, vert: string, frag: string) {
@@ -66,9 +63,9 @@ export class Material {
 
         this.generateLightsBindGroup();
 
-        this.generateScalarEntries(); 
+        this.generateScalarEntries();
         this.generateTextureEntries();
-        
+
         this.compileShader();
 
         this.generatePipeline();
@@ -119,12 +116,7 @@ export class Material {
         const vertex: GPUVertexState = {
             module: this.assembledShaderModule,
             entryPoint: "main_vert",
-            buffers: [
-                positionBufferLayout,
-                colorBufferLayout,
-                nrmBufferLayour,
-                uvBufferLayout,
-            ],
+            buffers: [positionBufferLayout, colorBufferLayout, nrmBufferLayour, uvBufferLayout],
         };
 
         const fragment: GPUFragmentState = {
@@ -157,11 +149,11 @@ export class Material {
             };
             this.properties.textures![index] = newTexture;
 
-            this.materialBindGroupEntries = this.materialBindGroupEntries.filter(entry => entry.binding === 0);
-            this.materialBindGrouplayoutEntries = this.materialBindGrouplayoutEntries.filter(entry => entry.binding === 0);
+            this.materialBindGroupEntries = this.materialBindGroupEntries.filter((entry) => entry.binding === 0);
+            this.materialBindGrouplayoutEntries = this.materialBindGrouplayoutEntries.filter((entry) => entry.binding === 0);
 
             this.generateTextureEntries();
-             
+
             this.materialBindGroup = getDevice().createBindGroup({
                 layout: this.materialBindGroupLayout,
                 entries: this.materialBindGroupEntries,
@@ -174,7 +166,7 @@ export class Material {
     async generateLightsBindGroup() {
         const camBuffer = getBuffer("camera");
         const dirlightBuffer = getBuffer("dirLight");
-        
+
         if (camBuffer && dirlightBuffer) {
             this.lightsBindGroupLayout = getDevice().createBindGroupLayout({
                 entries: [
@@ -207,7 +199,6 @@ export class Material {
         } else {
             throw new Error("Camera buffer not initialized");
         }
-
     }
 
     async generateScalarEntries() {
@@ -259,6 +250,9 @@ export class Material {
                 offset += scalarMemoryLayout[scalar.type].size;
                 index++;
 
+                // Keep each offset on metadata
+                scalar.bufferOffset = offset;
+
                 if (final) {
                     const finalPad = (alignByteOffset(offset, 16) - offset) / 4;
                     for (let i = 0; i < finalPad; i++) {
@@ -267,7 +261,7 @@ export class Material {
                 }
             });
 
-            const scalarDataRaw = new Float32Array(scalarData); 
+            const scalarDataRaw = new Float32Array(scalarData);
             const scalarByteLength = scalarData.length * 4;
 
             this.scalarBuffer = getDevice().createBuffer({
@@ -275,11 +269,7 @@ export class Material {
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             });
 
-            getDevice().queue.writeBuffer(
-                this.scalarBuffer,
-                0,
-                scalarDataRaw.buffer,
-            );
+            getDevice().queue.writeBuffer(this.scalarBuffer, 0, scalarDataRaw.buffer);
             this.scalarBindingShaderChunk = scalarsUniformTemplate.wgsl.replace("{{SCALAR_BLOCK}}", scalarShaderStruct);
 
             this.materialBindGroupEntries.push({
@@ -291,16 +281,38 @@ export class Material {
         }
     }
 
-    async generateTextureEntries() { 
+    public setScalar(scalarName: string, value: Float32Array) {
+        if (this.properties.scalars === undefined) {
+            console.error("Scalars block missing in the current material");
+            return;
+        }
+
+        const scalar = this.properties.scalars.find((scalar) => scalar.name === scalarName);
+        if (scalar === undefined) {
+            console.error("Scalar not found");
+            return;
+        }
+
+        const writeSize = value.length * 4;
+        const expectedSize = scalarMemoryLayout[scalar.type].size;
+
+        if (writeSize > expectedSize) {
+            console.error("Writing incorrect number of bytes to allocated buffer slot");
+            return;
+        }
+
+        getDevice().queue.writeBuffer(this.scalarBuffer, scalar.bufferOffset!, value);
+    }
+
+    async generateTextureEntries() {
         if (this.properties.textures !== undefined) {
             for (let i = 0; i < this.properties.textures.length; i++) {
                 const texture = this.properties.textures[i];
-    
-                getDevice().queue.copyExternalImageToTexture(
-                    { source: texture.image },
-                    { texture: texture.textureHandle },
-                    [texture.image.width, texture.image.height]
-                );
+
+                getDevice().queue.copyExternalImageToTexture({ source: texture.image }, { texture: texture.textureHandle }, [
+                    texture.image.width,
+                    texture.image.height,
+                ]);
                 const texView = texture.textureHandle.createView();
                 const sampler = getDevice().createSampler({
                     magFilter: "linear",
@@ -312,10 +324,10 @@ export class Material {
                 const samplerName = textureName + "_sampler";
 
                 let chunk = textureBindGroupTemplate.wgsl
-                .replace("{{TEXTURE_INDEX}}", textureIndex.toString())
-                .replace("{{SAMPLER_INDEX}}", samplerIndex.toString())
-                .replace("{{TEXTURE_NAME}}", textureName)
-                .replace("{{SAMPLER_NAME}}", samplerName);
+                    .replace("{{TEXTURE_INDEX}}", textureIndex.toString())
+                    .replace("{{SAMPLER_INDEX}}", samplerIndex.toString())
+                    .replace("{{TEXTURE_NAME}}", textureName)
+                    .replace("{{SAMPLER_NAME}}", samplerName);
 
                 this.textureBindingShaderChunk += chunk + "\n";
 
@@ -329,7 +341,7 @@ export class Material {
                         binding: i + 2,
                         visibility: GPUShaderStage.FRAGMENT,
                         sampler: { type: "filtering" },
-                    },
+                    }
                 );
 
                 this.materialBindGroupEntries.push(
@@ -340,12 +352,12 @@ export class Material {
                     {
                         binding: i + 2,
                         resource: sampler,
-                    },
+                    }
                 );
             }
         }
     }
-    
+
     generatePipeline() {
         const matricesBindGroupLayout = getDevice().createBindGroupLayout({
             entries: [
@@ -356,14 +368,14 @@ export class Material {
                 },
             ],
         });
-        
+
         this.materialBindGroupLayout = getDevice().createBindGroupLayout({
-            entries: this.materialBindGrouplayoutEntries
+            entries: this.materialBindGrouplayoutEntries,
         });
 
         this.materialBindGroup = getDevice().createBindGroup({
             layout: this.materialBindGroupLayout,
-            entries: this.materialBindGroupEntries
+            entries: this.materialBindGroupEntries,
         });
 
         const [vertex, fragment] = this.generateStates();

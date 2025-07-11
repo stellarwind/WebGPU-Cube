@@ -76,9 +76,9 @@ export const exampleScalars: Scalar[] = [
         value: new Float32Array([6.66]),
     },
     {
-        name: "Vec4 scalar",
+        name: "testcolor",
         type: "vec4f",
-        value: vec4.create(Math.random(), Math.random(), Math.random(), 1.0),
+        value: vec4.create(1.0, 1.0, 1.0, 1.0),
     },
     {
         name: "Another float scalar",

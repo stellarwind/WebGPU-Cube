@@ -3,7 +3,7 @@ import { generateCube } from "./primitives";
 import { GLTFLoader } from "./gltf-mesh-loader";
 import { MeshEntity } from "./mesh-entity";
 import { LightEntity, LightType } from "./light";
-import { vec3 } from "wgpu-matrix";
+import { vec3, vec4 } from "wgpu-matrix";
 import { createLitMaterial, createUnlitMaterial } from "./material-library";
 
 const DEBUG = false;
@@ -17,6 +17,7 @@ const run = async () => {
     cubeMesh.material = await createUnlitMaterial();
     cubeEntity.transform.translate(3.5, 0, 1);
     renderer.addEntity(cubeEntity);
+    cubeMesh.material.setScalar("testcolor", vec4.create(1.0, 0, 1.0, 1.0));
 
 
     const gltfMesh2 = await GLTFLoader.loadFile("./mesh/octo.gltf");

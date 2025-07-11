@@ -3,7 +3,8 @@ export type ScalarType = "bool" | "f32" | "i32" | "vec2f" | "vec3f" | "vec4f";
 export interface Scalar {
     name: string,
     type: ScalarType,
-    value: Float32Array
+    value: Float32Array,
+    bufferOffset?: number,
 }
 
 export interface ScalarMemoryLayout {
