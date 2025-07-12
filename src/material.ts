@@ -239,19 +239,18 @@ export class Material {
                     }
                 }
                 scalarData.push(...scalar.value);
-                scalar.bufferOffset = offset;
-
+                
                 if (scalar.type == "vec3f") {
                     scalarData.push(0);
                     offset += 4;
                 } // Padding vec3f to vec4f. Todo smartly check if next scalar is already 4 bytes
-
+                
+                // Keep each offset on metadata
+                scalar.bufferOffset = offset;
                 scalarShaderStruct += `${scalar.name.trim().replace(/\s/g, "_")} : ${scalar.type} , \n`;
 
                 offset += scalarMemoryLayout[scalar.type].size;
                 index++;
-
-                // Keep each offset on metadata
 
                 if (final) {
                     const finalPad = (alignByteOffset(offset, 16) - offset) / 4;

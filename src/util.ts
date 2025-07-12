@@ -11,3 +11,7 @@ export const clamp = (value: number, min: number, max: number) : number => {
 export const alignByteOffset = (offset: number, alignment: number): number => {
     return Math.ceil(offset / alignment) * alignment;
 };
+
+export const lerp = (a: number, b: number, t: number): number => {
+    return a + (b - a) * t;
+};
